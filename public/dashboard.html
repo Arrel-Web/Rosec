@@ -1,0 +1,312 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Dashboard</title>
+  <link rel="stylesheet" href="styles.css" />
+  <style>
+    body {
+      margin: 0;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: linear-gradient(to right, #f4f6fa, #e6f0ff);
+      height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .dashboard-wrapper {
+      display: flex;
+      background: white;
+      width: 1000px;
+      height: 600px;
+      box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
+      border-radius: 16px;
+      overflow: hidden;
+    }
+
+    .dashboard-image {
+      width: 45%;
+      background: #f2f2f2;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .dashboard-image img {
+      max-width: 90%;
+      height: auto;
+    }
+
+    .dashboard-container {
+      width: 55%;
+      padding: 40px;
+      overflow-y: auto;
+    }
+
+    .top-bar {
+      display: flex;
+      justify-content: flex-end;
+      margin-bottom: 20px;
+    }
+
+    .user-icon-container {
+      position: relative;
+    }
+
+    .user-icon-container img {
+      width: 40px;
+      cursor: pointer;
+    }
+
+    .dropdown-content {
+      display: none;
+      position: absolute;
+      top: 45px;
+      right: 0;
+      background: white;
+      border: 1px solid #ccc;
+      border-radius: 8px;
+      padding: 10px;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+    }
+
+    .dropdown-content p {
+      margin: 5px 0;
+    }
+
+    .dropdown-content button {
+      background: #ff4d4d;
+      color: white;
+      border: none;
+      padding: 6px 12px;
+      border-radius: 6px;
+      cursor: pointer;
+      margin-top: 10px;
+    }
+
+    h3 {
+      margin-top: 0;
+    }
+
+    .button-group {
+      margin: 10px 0;
+    }
+
+    .button-group button {
+      padding: 10px 16px;
+      font-size: 14px;
+      border: none;
+      background: #6a5acd;
+      color: white;
+      border-radius: 6px;
+      cursor: pointer;
+    }
+
+    input[type="text"] {
+      width: 100%;
+      padding: 10px;
+      margin: 8px 0;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 10px;
+    }
+
+    table th,
+    table td {
+      padding: 8px;
+      border: 1px solid #ccc;
+      text-align: left;
+    }
+
+    .modal {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      background: rgba(0, 0, 0, 0.4);
+      z-index: 1000;
+    }
+
+    .modal-content {
+      background: white;
+      padding: 20px;
+      border-radius: 10px;
+      width: 90%;
+      max-width: 600px;
+    }
+
+    .close-button {
+      float: right;
+      font-size: 24px;
+      cursor: pointer;
+    }
+
+    select {
+      width: 100%;
+      padding: 10px;
+      border-radius: 6px;
+      border: 1px solid #ccc;
+    }
+  </style>
+</head>
+<body>
+  <div class="dashboard-wrapper">
+    <!-- Image panel -->
+    <div class="dashboard-image">
+      <img src="https://th.bing.com/th/id/R.db9de20b9370d5182132389aa967bf5a?rik=LJsMjTJUQ55hJQ&riu=http%3a%2f%2fpluspng.com%2fimg-png%2fenglish-subject-png-english-2246.png&ehk=3Ai%2bYPLkxxG2%2fL9qFP8NAod5arg6F9YMMFr0jWytwcc%3d&risl=&pid=ImgRaw&r=0" alt="Dashboard Illustration" />
+    </div>
+
+    <!-- Content panel -->
+    <div class="dashboard-container">
+      <div class="top-bar">
+        <div class="user-icon-container">
+          <img
+            src="https://static.vecteezy.com/system/resources/previews/019/879/186/large_2x/user-icon-on-transparent-background-free-png.png"
+            alt="User Icon"
+            id="userIconBtn"
+          />
+          <div id="userDropdown" class="dropdown-content">
+            <p id="user-role">Role</p>
+            <p id="user-email">Email</p>
+            <button onclick="logout()">Logout</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Admin Section -->
+      <div id="admin-dashboard" style="display: none;">
+        <h3>Admin Panel</h3>
+        <input type="text" id="newSubject" placeholder="Enter Subject Name" />
+        <div class="button-group">
+          <button id="addSubjectBtn">Add Subject</button>
+        </div>
+        <div class="button-group">
+          <button onclick="addStudentToSubject()">Add Student to Subject</button>
+        </div>
+        <div class="button-group">
+          <button onclick="window.location.href='subject-list.html'">View Subjects</button>
+        </div>
+      </div>
+
+      <!-- Teacher Section -->
+      <div id="teacher-dashboard" style="display: none;">
+        <h3>Teacher Panel</h3>
+        <div class="button-group">
+          <button onclick="addStudentToSubject()">Add Student to Subject</button>
+        </div>
+        <div class="button-group">
+          <button onclick="window.location.href='subject-list.html'">View Subjects</button>
+        </div>
+      </div>
+
+      <!-- Student Info -->
+      <div id="student-info-panel" style="display: none;">
+        <h3>Student Information</h3>
+        <table id="studentsTable" class="excel-table">
+          <thead>
+            <tr><th>ID</th><th>Name</th></tr>
+          </thead>
+          <tbody id="studentList"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal -->
+  <div id="addStudentModal" class="modal" style="display:none;">
+    <div class="modal-content">
+      <span class="close-button" onclick="closeStudentModal()">&times;</span>
+      <h2>Add Students to Subject</h2>
+      <label for="modalSubjectSelect">Select Subject:</label>
+      <select id="modalSubjectSelect" style="margin: 10px 0;"></select>
+      <button onclick="addTableRow()">Add Row</button>
+      <table id="studentInputTable">
+        <thead><tr><th>Student ID</th><th>Student Name</th></tr></thead>
+        <tbody></tbody>
+      </table>
+      <button onclick="submitStudentTable()" style="margin-top: 10px;">Submit Students</button>
+    </div>
+  </div>
+
+  <!-- JS Modules -->
+  <script type="module" src="js/dashboard.js"></script>
+  <script type="module">
+    import { getFirestore, doc, getDoc, getDocs, collection, addDoc } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js';
+    const db = getFirestore();
+
+    window.addStudentToSubject = async function () {
+      const modal = document.getElementById('addStudentModal');
+      const subjectSelect = document.getElementById('modalSubjectSelect');
+      const tableBody = document.querySelector('#studentInputTable tbody');
+      subjectSelect.innerHTML = '';
+      tableBody.innerHTML = '';
+      addTableRow();
+
+      const snapshot = await getDocs(collection(db, "subjects"));
+      snapshot.forEach(doc => {
+        const option = document.createElement('option');
+        option.value = doc.id;
+        option.textContent = doc.data().name;
+        subjectSelect.appendChild(option);
+      });
+
+      modal.style.display = 'flex';
+    };
+
+    window.closeStudentModal = function () {
+      document.getElementById('addStudentModal').style.display = 'none';
+    };
+
+    window.addTableRow = function () {
+      const tbody = document.querySelector('#studentInputTable tbody');
+      const row = document.createElement('tr');
+      row.innerHTML = `
+        <td><input type="text" class="studentIDCell" placeholder="Student ID"></td>
+        <td><input type="text" class="studentNameCell" placeholder="Student Name"></td>
+      `;
+      tbody.appendChild(row);
+    };
+
+    window.submitStudentTable = async function () {
+      const subjectId = document.getElementById('modalSubjectSelect').value;
+      const idInputs = document.querySelectorAll('.studentIDCell');
+      const nameInputs = document.querySelectorAll('.studentNameCell');
+
+      const settingsDoc = await getDoc(doc(db, "settings", "studentIDConfig"));
+      if (!settingsDoc.exists()) {
+        alert("Max Student ID length is not set.");
+        return;
+      }
+      const maxLength = settingsDoc.data().maxStudentIDLength;
+      const subjectRef = doc(db, "subjects", subjectId);
+
+      for (let i = 0; i < idInputs.length; i++) {
+        const id = idInputs[i].value.trim();
+        const name = nameInputs[i].value.trim();
+        if (!id || !name) continue;
+        if (!/^\d+$/.test(id) || id.length > maxLength) {
+          alert(`Invalid Student ID "${id}" (must be numeric and ≤ ${maxLength} digits)`);
+          return;
+        }
+
+        await addDoc(collection(subjectRef, "students"), { studentID: id, name: name });
+      }
+
+      alert("✅ Students added successfully.");
+      closeStudentModal();
+      if (window.loadStudentsForSubject) window.loadStudentsForSubject(subjectId);
+    };
+  </script>
+</body>
+</html>

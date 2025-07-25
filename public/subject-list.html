@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Subject List</title>
+  <link rel="stylesheet" href="styles.css" />
+  <style>
+    .modal.hidden { display: none; }
+    .modal {
+      position: fixed;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      background: rgba(0,0,0,0.5);
+      display: flex; justify-content: center; align-items: center;
+      z-index: 1000;
+    }
+    .modal-content {
+      background: white;
+      padding: 20px;
+      border-radius: 10px;
+      width: 300px;
+      text-align: center;
+    }
+    .btn {
+      padding: 8px 16px;
+      background-color: #770562;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      margin-top: 10px;
+      cursor: pointer;
+    }
+    .btn-secondary {
+      background-color: #888;
+      margin-left: 10px;
+    }
+    .input {
+      display: block;
+      margin: 10px auto;
+      padding: 8px;
+      width: 90%;
+    }
+    .teacher-actions {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+    }
+    .icon {
+      cursor: pointer;
+      font-size: 16px;
+    }
+    .dropdown {
+      width: 100%;
+      padding: 8px;
+    }
+  </style>
+</head>
+<body>
+  <div class="dashboard-container">
+    <!-- Top bar with Back and User icon -->
+    <div class="top-bar" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+      <div>
+        <img 
+          src="https://cdn-icons-png.flaticon.com/512/93/93634.png" 
+          alt="Back" 
+          style="width: 30px; height: 30px; cursor: pointer;" 
+          onclick="window.history.back()" 
+        />
+      </div>
+      <div class="user-icon-container" style="position: relative;">
+        <img
+          src="https://static.vecteezy.com/system/resources/previews/019/879/186/large_2x/user-icon-on-transparent-background-free-png.png"
+          alt="User Icon"
+          id="userIconBtn"
+          style="width: 35px; height: 35px; cursor: pointer;"
+        />
+        <div id="userDropdown" class="dropdown-content" style="display: none; position: absolute; right: 0; background: white; border: 1px solid #ccc; box-shadow: 0px 2px 5px rgba(0,0,0,0.2); z-index: 1000;">
+          <p id="user-role" style="margin: 10px;">Role</p>
+          <p id="user-email" style="margin: 10px;">Email</p>
+          <button onclick="logout()" style="margin: 10px; padding: 6px 12px; background: #770562; color: white; border: none; border-radius: 4px; cursor: pointer;">Logout</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Subject Table -->
+    <h3>Subject List</h3>
+    <table border="1" width="100%" style="border-collapse: collapse;">
+      <thead>
+        <tr>
+          <th>Subject</th>
+          <th id="teacherHeader">Assigned Teacher</th>
+        </tr>
+      </thead>
+      <tbody id="subjectTableBody">
+        <!-- Populated by JS -->
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Edit Teacher Modal -->
+  <div class="modal hidden" id="editTeacherModal">
+    <div class="modal-content">
+      <h2>Change Assigned Teacher</h2>
+      <select id="teacherDropdown" class="dropdown"></select>
+      <button onclick="saveTeacherChange()" class="btn">Save</button>
+      <button onclick="closeEditModal()" class="btn btn-secondary">Cancel</button>
+    </div>
+  </div>
+
+  <!-- Add Teacher Modal -->
+  <div class="modal hidden" id="addTeacherModal">
+    <div class="modal-content">
+      <h2>Add New Teacher</h2>
+      <input type="text" id="newTeacherName" placeholder="Name" class="input" />
+      <input type="email" id="newTeacherEmail" placeholder="Email" class="input" />
+      <button onclick="addNewTeacher()" class="btn">Add</button>
+      <button onclick="closeAddModal()" class="btn btn-secondary">Cancel</button>
+    </div>
+  </div>
+
+  <!-- JavaScript -->
+  <script type="module" src="js/subject-list.js"></script>
+</body>
+</html>

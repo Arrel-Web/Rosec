@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Student Dashboard</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="dashboard-container">
+        <div class="top-bar">
+            <div class="back-button-container">
+                <img src="https://cdn-icons-png.flaticon.com/512/93/93634.png" alt="Back Icon" id="backBtn" class="icon">
+            </div>
+            <div class="user-icon-container">
+                <img src="https://static.vecteezy.com/system/resources/previews/019/879/186/large_2x/user-icon-on-transparent-background-free-png.png" alt="User Icon" id="userIconBtn" class="icon">
+                <div id="userDropdown" class="dropdown-content">
+                    <p id="user-role">Role</p>
+                    <p id="user-email">Email</p>
+                    <button onclick="logout()">Logout</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Student Info Panel -->
+        <div id="student-info-panel" style="display: none;">
+            <h3 id="subjectNameHeading">Subject Name</h3>
+            <table id="studentsTable" class="excel-table">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Name</th>
+                    </tr>
+                </thead>
+                <tbody id="studentList">
+                    <!-- Student data will be displayed here -->
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Include JavaScript -->
+    <script type="module" src="js/student-dashboard.js"></script>
+</body>
+</html>
