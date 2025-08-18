@@ -448,4 +448,23 @@ document.getElementById('signOutBtn').addEventListener('click', () => {
   });
 });
 
+// Load demo data for testing
+function loadDemoData() {
+  // Add demo subjects
+  subjectSelect.innerHTML = `
+    <option value="">Select Subject</option>
+    <option value="math101">Mathematics 101</option>
+    <option value="eng101">English 101</option>
+    <option value="sci101">Science 101</option>
+  `;
+  
+  // Add demo classes
+  classSelect.innerHTML = `
+    <option value="">Select Class</option>
+    <option value="class1">BSIT-3A</option>
+    <option value="class2">BSCS-2B</option>
+    <option value="class3">BSCPE-4C</option>
+  `;
+}
+
 console.log('Answer Sheet Maker loaded successfully');
