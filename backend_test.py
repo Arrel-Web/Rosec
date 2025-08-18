@@ -102,20 +102,21 @@ class AnswerSheetBackendTester:
             print(f"Error accessing JavaScript functionality: {str(e)}")
             return False
 
-    def test_css_styles_accessibility(self):
-        """Test if CSS styles are accessible"""
+    def test_css_styles_embedded(self):
+        """Test if CSS styles are embedded in HTML"""
         try:
-            response = requests.get(f"{self.base_url}/styles.css", timeout=10)
+            response = requests.get(f"{self.base_url}/public/answer-sheet-demo.html", timeout=10)
             if response.status_code == 200:
                 content = response.text
-                # Check for key CSS classes
+                # Check for key CSS classes embedded in HTML
                 required_classes = [
-                    '.sheet-container',
+                    '.container',
                     '.config-section',
                     '.answer-sheet-preview',
                     '.scanner-marker',
                     '.choice-bubble',
-                    '.points-row'
+                    '.key-bubble',
+                    '.id-bubble'
                 ]
                 
                 missing_classes = []
@@ -133,7 +134,7 @@ class AnswerSheetBackendTester:
                 print(f"HTTP Status: {response.status_code}")
                 return False
         except Exception as e:
-            print(f"Error accessing CSS file: {str(e)}")
+            print(f"Error accessing CSS styles: {str(e)}")
             return False
 
     def test_firebase_config_presence(self):
