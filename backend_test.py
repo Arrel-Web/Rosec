@@ -316,13 +316,13 @@ def main():
     # Run all tests
     tests = [
         ("Answer Sheet Page Accessibility", tester.test_answer_sheet_page_accessibility),
-        ("JavaScript File Accessibility", tester.test_javascript_file_accessibility),
-        ("CSS Styles Accessibility", tester.test_css_styles_accessibility),
-        ("Firebase Configuration", tester.test_firebase_config_presence),
-        ("Login Page Accessibility", tester.test_login_page_accessibility),
+        ("JavaScript Functionality", tester.test_javascript_functionality),
+        ("CSS Styles Embedded", tester.test_css_styles_embedded),
+        ("Demo Functionality", tester.test_demo_functionality),
+        ("Navigation Elements", tester.test_navigation_elements),
         ("Demo Data Functionality", tester.test_demo_data_functionality),
         ("Answer Sheet Generation Logic", tester.test_answer_sheet_generation_logic),
-        ("Points Configuration Logic", tester.test_points_configuration_logic)
+        ("Answer Key Functionality", tester.test_answer_key_functionality)
     ]
     
     for test_name, test_func in tests:
