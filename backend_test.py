@@ -35,7 +35,7 @@ class AnswerSheetBackendTester:
     def test_answer_sheet_page_accessibility(self):
         """Test if answer sheet maker page is accessible"""
         try:
-            response = requests.get(f"{self.base_url}/answer-sheet-maker.html", timeout=10)
+            response = requests.get(f"{self.base_url}/public/answer-sheet-demo.html", timeout=10)
             if response.status_code == 200:
                 # Check for key elements in the HTML
                 content = response.text
