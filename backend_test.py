@@ -171,36 +171,37 @@ class AnswerSheetBackendTester:
             print(f"Error checking demo functionality: {str(e)}")
             return False
 
-    def test_login_page_accessibility(self):
-        """Test if login page is accessible (required for authentication)"""
+    def test_navigation_elements(self):
+        """Test if navigation elements are present"""
         try:
-            response = requests.get(f"{self.base_url}/index.html", timeout=10)
+            response = requests.get(f"{self.base_url}/public/answer-sheet-demo.html", timeout=10)
             if response.status_code == 200:
                 content = response.text
-                # Check for login elements
-                login_elements = [
-                    'loginForm',
-                    'email',
-                    'password',
-                    'signInWithEmailAndPassword'
+                # Check for navigation elements
+                nav_elements = [
+                    'nav-buttons',
+                    'Home',
+                    'Back',
+                    'dashboard.html',
+                    'history.back()'
                 ]
                 
                 missing_elements = []
-                for element in login_elements:
+                for element in nav_elements:
                     if element not in content:
                         missing_elements.append(element)
                 
                 if missing_elements:
-                    print(f"Missing login elements: {missing_elements}")
+                    print(f"Missing navigation elements: {missing_elements}")
                     return False
                 
-                print("Login page accessible with required elements")
+                print("Navigation elements found")
                 return True
             else:
                 print(f"HTTP Status: {response.status_code}")
                 return False
         except Exception as e:
-            print(f"Error accessing login page: {str(e)}")
+            print(f"Error accessing navigation elements: {str(e)}")
             return False
 
     def test_demo_data_functionality(self):
