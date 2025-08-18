@@ -46,26 +46,31 @@ let currentAnswerKey = {};
 let currentQuestionSetId = null;
 
 // Toggle user dropdown
-userIconBtn.addEventListener('click', (e) => {
-  e.stopPropagation();
-  userDropdown.classList.toggle('show');
-});
-document.addEventListener('click', () => {
-  userDropdown.classList.remove('show');
-});
+if (userIconBtn) {
+  userIconBtn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    userDropdown.classList.toggle('show');
+  });
+  
+  document.addEventListener('click', () => {
+    userDropdown.classList.remove('show');
+  });
+}
 
 // Auth listener
 onAuthStateChanged(auth, async (user) => {
   if (user) {
-    userNameEl.textContent = user.displayName || 'User';
-    userEmailEl.textContent = user.email;
+    if (userNameEl) userNameEl.textContent = user.displayName || 'User';
+    if (userEmailEl) userEmailEl.textContent = user.email;
     const role = await getUserRole(user.email);
-    userRoleEl.textContent = `Role: ${role || 'N/A'}`;
+    if (userRoleEl) userRoleEl.textContent = `Role: ${role || 'N/A'}`;
     
     loadSubjects();
     loadClasses();
   } else {
-    window.location.href = 'index.html';
+    // If not authenticated, load demo data
+    loadDemoSubjects();
+    loadDemoClasses();
   }
 });
 
@@ -125,25 +130,33 @@ async function loadClasses() {
 
 // Demo data loaders
 function loadDemoSubjects() {
-  subjectSelect.innerHTML = `
-    <option value="">Select Subject</option>
-    <option value="math101">Mathematics 101</option>
-    <option value="eng101">English 101</option>
-    <option value="sci101">Science 101</option>
-  `;
+  if (subjectSelect) {
+    subjectSelect.innerHTML = `
+      <option value="">Select Subject</option>
+      <option value="math101">Mathematics 101</option>
+      <option value="eng101">English 101</option>
+      <option value="sci101">Science 101</option>
+      <option value="phy101">Physics 101</option>
+      <option value="chem101">Chemistry 101</option>
+    `;
+  }
 }
 
 function loadDemoClasses() {
-  classSelect.innerHTML = `
-    <option value="">Select Class</option>
-    <option value="class1">BSIT-3A</option>
-    <option value="class2">BSCS-2B</option>
-    <option value="class3">BSCPE-4C</option>
-  `;
+  if (classSelect) {
+    classSelect.innerHTML = `
+      <option value="">Select Class</option>
+      <option value="class1">BSIT-3A</option>
+      <option value="class2">BSCS-2B</option>
+      <option value="class3">BSCPE-4C</option>
+      <option value="class4">BSEE-1A</option>
+      <option value="class5">BSME-2C</option>
+    `;
+  }
 }
 
 // Points configuration management
-document.getElementById('addPointsRow').addEventListener('click', addPointsRow);
+document.getElementById('addPointsRow')?.addEventListener('click', addPointsRow);
 
 function addPointsRow() {
   const pointsRow = document.createElement('div');
@@ -179,17 +192,17 @@ document.addEventListener('click', (e) => {
 });
 
 // Generate answer sheet
-document.getElementById('generateSheet').addEventListener('click', generateAnswerSheet);
+document.getElementById('generateSheet')?.addEventListener('click', generateAnswerSheet);
 
 function generateAnswerSheet() {
-  const examTitle = examTitleInput.value || 'Examination';
-  const totalQuestions = parseInt(totalQuestionsInput.value) || 30;
-  const choiceCount = parseInt(choiceOptionsSelect.value) || 4;
-  const questionsPerColumn = parseInt(questionsPerColumnInput.value) || 15;
-  const selectedSubject = subjectSelect.options[subjectSelect.selectedIndex]?.text || '';
-  const selectedClass = classSelect.value || '';
-  const studentIdLength = parseInt(studentIdLengthInput.value) || 8;
-  const subjectIdLength = parseInt(subjectIdLengthInput.value) || 0;
+  const examTitle = examTitleInput?.value || 'Examination';
+  const totalQuestions = parseInt(totalQuestionsInput?.value) || 30;
+  const choiceCount = parseInt(choiceOptionsSelect?.value) || 4;
+  const questionsPerColumn = parseInt(questionsPerColumnInput?.value) || 15;
+  const selectedSubject = subjectSelect?.options[subjectSelect.selectedIndex]?.text || '';
+  const selectedClass = classSelect?.value || '';
+  const studentIdLength = parseInt(studentIdLengthInput?.value) || 8;
+  const subjectIdLength = parseInt(subjectIdLengthInput?.value) || 0;
   
   // Validate student ID length (mandatory)
   if (studentIdLength < 1 || studentIdLength > 15) {
@@ -280,14 +293,16 @@ function generateAnswerSheet() {
     </div>
   `;
   
-  sheetPreview.innerHTML = sheetHTML;
-  sheetPreview.style.display = 'block';
-  
-  // Generate answer key inputs with bubbles
-  generateAnswerKeyBubbles(totalQuestions, choices);
-  
-  // Scroll to preview
-  sheetPreview.scrollIntoView({ behavior: 'smooth' });
+  if (sheetPreview) {
+    sheetPreview.innerHTML = sheetHTML;
+    sheetPreview.style.display = 'block';
+    
+    // Generate answer key inputs with bubbles
+    generateAnswerKeyBubbles(totalQuestions, choices);
+    
+    // Scroll to preview
+    sheetPreview.scrollIntoView({ behavior: 'smooth' });
+  }
 }
 
 function generateIdSections(studentIdLength, subjectIdLength) {
@@ -337,18 +352,18 @@ function generateIdSections(studentIdLength, subjectIdLength) {
 }
 
 function getPointsConfiguration() {
-  const pointsRows = pointsConfig.querySelectorAll('.points-row');
+  const pointsRows = pointsConfig?.querySelectorAll('.points-row') || [];
   const ranges = [];
   
   pointsRows.forEach(row => {
-    const start = parseInt(row.querySelector('.range-start').value) || 1;
-    const end = parseInt(row.querySelector('.range-end').value) || 1;
-    const points = parseFloat(row.querySelector('.points-value').value) || 1;
+    const start = parseInt(row.querySelector('.range-start')?.value) || 1;
+    const end = parseInt(row.querySelector('.range-end')?.value) || 1;
+    const points = parseFloat(row.querySelector('.points-value')?.value) || 1;
     
     ranges.push({ start, end, points });
   });
   
-  return ranges;
+  return ranges.length > 0 ? ranges : [{ start: 1, end: 30, points: 1 }];
 }
 
 function getPointsForQuestion(questionNumber, pointsRanges) {
@@ -369,6 +384,8 @@ function calculateTotalPoints(pointsRanges, totalQuestions) {
 }
 
 function generateAnswerKeyBubbles(totalQuestions, choices) {
+  if (!answerKeyGrid) return;
+  
   answerKeyGrid.innerHTML = '';
   
   for (let i = 1; i <= totalQuestions; i++) {
@@ -386,7 +403,6 @@ function generateAnswerKeyBubbles(totalQuestions, choices) {
       const bubble = document.createElement('div');
       bubble.className = 'key-bubble';
       bubble.setAttribute('data-question', i);
-      bubble.setAttribute('data-choice', choice);
       bubble.setAttribute('data-choice', choice);
       bubble.title = `Question ${i} - Choice ${choice}`;
       
@@ -407,7 +423,9 @@ function generateAnswerKeyBubbles(totalQuestions, choices) {
     answerKeyGrid.appendChild(keyItem);
   }
   
-  answerKeySection.style.display = 'block';
+  if (answerKeySection) {
+    answerKeySection.style.display = 'block';
+  }
 }
 
 function handleAnswerKeyBubbleClick(event, questionNumber, choice) {
@@ -431,7 +449,7 @@ function handleAnswerKeyBubbleClick(event, questionNumber, choice) {
 }
 
 // Save template
-document.getElementById('saveTemplate').addEventListener('click', saveTemplate);
+document.getElementById('saveTemplate')?.addEventListener('click', saveTemplate);
 
 async function saveTemplate() {
   if (!currentAnswerKey || Object.keys(currentAnswerKey).length === 0) {
@@ -439,12 +457,12 @@ async function saveTemplate() {
     return;
   }
   
-  const examTitle = examTitleInput.value || 'Examination';
-  const subjectId = subjectSelect.value;
-  const classId = classSelect.value;
-  const totalQuestions = parseInt(totalQuestionsInput.value) || 30;
-  const studentIdLength = parseInt(studentIdLengthInput.value) || 8;
-  const subjectIdLength = parseInt(subjectIdLengthInput.value) || 0;
+  const examTitle = examTitleInput?.value || 'Examination';
+  const subjectId = subjectSelect?.value;
+  const classId = classSelect?.value;
+  const totalQuestions = parseInt(totalQuestionsInput?.value) || 30;
+  const studentIdLength = parseInt(studentIdLengthInput?.value) || 8;
+  const subjectIdLength = parseInt(subjectIdLengthInput?.value) || 0;
   
   if (!subjectId || !classId) {
     alert('Please select both subject and class.');
@@ -477,8 +495,8 @@ async function saveTemplate() {
       subjectIdLength,
       items,
       pointsConfiguration: getPointsConfiguration(),
-      choiceOptions: parseInt(choiceOptionsSelect.value),
-      createdBy: auth.currentUser?.email,
+      choiceOptions: parseInt(choiceOptionsSelect?.value) || 4,
+      createdBy: auth.currentUser?.email || 'demo_user',
       createdAt: new Date(),
       scannerCompatible: true
     };
@@ -486,12 +504,16 @@ async function saveTemplate() {
     // Generate unique ID
     currentQuestionSetId = `qset_${Date.now()}`;
     
-    await setDoc(doc(db, 'questions', currentQuestionSetId), {
-      questionSetId: currentQuestionSetId,
-      ...questionSetData
-    });
-    
-    alert('Answer sheet template and answer key saved successfully!');
+    if (auth.currentUser) {
+      await setDoc(doc(db, 'questions', currentQuestionSetId), {
+        questionSetId: currentQuestionSetId,
+        ...questionSetData
+      });
+      alert('Answer sheet template and answer key saved successfully to Firebase!');
+    } else {
+      console.log('Template Data (Demo Mode):', questionSetData);
+      alert('Answer sheet template and answer key saved successfully! (Demo mode - check console for data)');
+    }
     
   } catch (error) {
     console.error('Error saving template:', error);
@@ -500,7 +522,7 @@ async function saveTemplate() {
 }
 
 // Save answer key
-document.getElementById('saveAnswerKey').addEventListener('click', () => {
+document.getElementById('saveAnswerKey')?.addEventListener('click', () => {
   if (Object.keys(currentAnswerKey).length === 0) {
     alert('Please set at least one answer first.');
     return;
@@ -511,7 +533,7 @@ document.getElementById('saveAnswerKey').addEventListener('click', () => {
 });
 
 // Clear answer key
-document.getElementById('clearAnswerKey').addEventListener('click', () => {
+document.getElementById('clearAnswerKey')?.addEventListener('click', () => {
   if (confirm('Are you sure you want to clear all answers?')) {
     currentAnswerKey = {};
     const allBubbles = document.querySelectorAll('.key-bubble.selected');
@@ -523,29 +545,30 @@ document.getElementById('clearAnswerKey').addEventListener('click', () => {
 });
 
 // Print functionality
-document.getElementById('printSheet').addEventListener('click', () => {
+document.getElementById('printSheet')?.addEventListener('click', () => {
   window.print();
 });
 
 // Export PDF (basic implementation)
-document.getElementById('exportPDF').addEventListener('click', () => {
+document.getElementById('exportPDF')?.addEventListener('click', () => {
   // This would require a PDF library like jsPDF
   alert('PDF export functionality would be implemented here using jsPDF library.');
 });
 
 // Auto-update points ranges when total questions change
-totalQuestionsInput.addEventListener('change', () => {
+totalQuestionsInput?.addEventListener('change', () => {
   const totalQuestions = parseInt(totalQuestionsInput.value) || 30;
-  const pointsRows = pointsConfig.querySelectorAll('.points-row');
+  const pointsRows = pointsConfig?.querySelectorAll('.points-row');
   
-  if (pointsRows.length === 1) {
+  if (pointsRows && pointsRows.length === 1) {
     const firstRow = pointsRows[0];
-    firstRow.querySelector('.range-end').value = totalQuestions;
+    const endInput = firstRow.querySelector('.range-end');
+    if (endInput) endInput.value = totalQuestions;
   }
 });
 
 // Validate student ID length
-studentIdLengthInput.addEventListener('change', (e) => {
+studentIdLengthInput?.addEventListener('change', (e) => {
   const value = parseInt(e.target.value);
   if (value < 1 || value > 15) {
     alert('Student ID length must be between 1 and 15 digits.');
@@ -554,7 +577,7 @@ studentIdLengthInput.addEventListener('change', (e) => {
 });
 
 // Validate subject ID length
-subjectIdLengthInput.addEventListener('change', (e) => {
+subjectIdLengthInput?.addEventListener('change', (e) => {
   const value = parseInt(e.target.value);
   if (value < 0 || value > 8) {
     alert('Subject ID length must be between 0 and 8 digits.');
@@ -563,7 +586,7 @@ subjectIdLengthInput.addEventListener('change', (e) => {
 });
 
 // Logout functionality
-document.getElementById('signOutBtn').addEventListener('click', () => {
+document.getElementById('signOutBtn')?.addEventListener('click', () => {
   signOut(auth).then(() => {
     window.location.href = 'index.html';
   }).catch((error) => {
@@ -572,11 +595,13 @@ document.getElementById('signOutBtn').addEventListener('click', () => {
   });
 });
 
-// Initialize demo data if Firebase is not available
-if (!navigator.onLine) {
-  console.log('Offline mode - loading demo data');
-  loadDemoSubjects();
-  loadDemoClasses();
-}
+// Initialize demo data if Firebase is not available or user not logged in
+setTimeout(() => {
+  if (!auth.currentUser) {
+    console.log('No authenticated user - loading demo data');
+    loadDemoSubjects();
+    loadDemoClasses();
+  }
+}, 2000);
 
 console.log('Answer Sheet Maker loaded successfully');
