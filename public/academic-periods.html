@@ -1,0 +1,213 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Rosec Academic Periods</title>
+  <link rel="stylesheet" href="styles.css" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" />
+  <style>
+  /* Grid & Cards */
+#academicYearsGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+  gap: 20px;
+  max-height: 80vh;
+  overflow-y: auto;
+  padding: 10px;
+}
+
+.academic-year-card {
+  background: linear-gradient(135deg, #ffffff, #f3f6ff);
+  border-radius: 12px;
+  border: 1px solid #e0e0e0;
+  padding: 16px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  transition: transform 0.2s, box-shadow 0.2s, background 0.2s;
+  cursor: pointer;
+}
+
+.academic-year-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 8px 20px rgba(0,0,0,0.15);
+  background: linear-gradient(135deg, #fffaf5, #f0f6ff);
+}
+
+.academic-year-card h5 {
+  margin: 0;
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #2d3e50;
+}
+
+.academic-year-card .label {
+  font-size: 0.8rem;
+  color: #555;
+}
+
+.academic-year-card .value {
+  font-weight: bold;
+  font-size: 0.85rem;
+  color: #1f2a38;
+}
+
+.muted {
+  color: #888;
+  font-style: italic;
+  text-align: center;
+  padding: 20px 0;
+}
+
+/* Form Styling */
+#academicYearForm {
+  background: #ffffff;
+  padding: 25px;
+  border-radius: 12px;
+  border: 1px solid #ddd;
+  box-shadow: 0 6px 20px rgba(0,0,0,0.08);
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+  max-height: 80vh;
+  overflow-y: auto;
+}
+
+#academicYearForm input,
+#academicYearForm select {
+  width: 100%;
+  padding: 10px;
+  margin-top: 5px;
+  border-radius: 6px;
+  border: 1px solid #ccc;
+}
+
+#academicYearForm input:focus,
+#academicYearForm select:focus {
+  outline: none;
+  border-color: #4f8ef7;
+  box-shadow: 0 0 5px rgba(79,142,247,0.5);
+}
+
+#academicYearForm button {
+  padding: 10px;
+  border-radius: 6px;
+  border: none;
+  font-weight: bold;
+  cursor: pointer;
+}
+
+#createAcademicYearBtn {
+  background-color: #4f8ef7;
+  color: white;
+}
+
+#createAcademicYearBtn:hover {
+  background-color: #3a6fd2;
+}
+
+#cancelEditBtn {
+  background-color: #dc3545;
+  color: white;
+}
+
+#cancelEditBtn:hover {
+  background-color: #a71d2a;
+}
+
+  </style>
+</head>
+<body>
+  <div class="layout">
+    <!-- Sidebar -->
+    <aside class="sidebar">
+      <div class="sidebar-header">
+        <span class="logo"><i class="fa-solid fa-graduation-cap"></i></span>
+        <span class="title">Rosec</span>
+      </div>
+      <nav class="sidebar-nav">
+        <a href="dashboard.html"><i class="fa-solid fa-house"></i> Dashboard</a>
+        <a href="classes.html"><i class="fa-solid fa-book"></i> Classes</a>
+        <a href="students.html"><i class="fa-solid fa-user-graduate"></i> Students</a>
+        <a href="teachers.html"><i class="fa-solid fa-chalkboard-user"></i> Teachers</a>
+        <a href="academic-periods.html" class="active"><i class="fa-solid fa-calendar-days"></i> Academic Periods</a>
+        <a href="settings.html"><i class="fa-solid fa-gear"></i> Settings</a>
+      </nav>
+    </aside>
+
+    <!-- Main -->
+    <div class="main-area">
+      <header class="topbar" style="display:flex; justify-content:space-between; align-items:center;">
+        <div class="brand">
+          <h1>Academic Periods</h1>
+        </div>
+        <div class="top-actions" style="position: relative;">
+          <div class="user" style="position: relative;">
+            <button id="userIconBtn" class="user-btn" aria-label="User menu">
+              <img id="userAvatar" src="https://static.vecteezy.com/system/resources/previews/000/550/731/original/user-icon-vector.jpg" alt="User avatar" />
+            </button>
+            <div id="userDropdown" class="user-dropdown" role="menu" aria-hidden="true" tabindex="-1">
+              <div id="user-name">User Name</div>
+              <div id="user-email"></div>
+              <div id="user-role" style="font-style: italic; color: #666;">Role: Loading...</div>
+              <div class="divider"></div>
+              <button id="signOutBtn" style="width: 100%; padding: 8px; cursor: pointer;">Log out</button>
+            </div>
+          </div>
+        </div>
+      </header>
+
+      <main style="display: flex; gap: 30px; margin-top: 20px;">
+        <!-- Left side: Create Academic Year Form -->
+        <section id="academicYearForm" class="card-section">
+          <h3>Create Academic Year</h3>
+
+          <label for="academicYearId">Academic Year ID:</label>
+          <input type="text" id="academicYearId" placeholder="e.g., ay2" />
+
+          <h4>School Year</h4>
+          <label for="schoolYearId">School Year ID:</label>
+          <input type="text" id="schoolYearId" placeholder="e.g., sy2024-2025" />
+          <label for="schoolYearStart">Start Date:</label>
+          <input type="date" id="schoolYearStart" />
+          <label for="schoolYearEnd">End Date:</label>
+          <input type="date" id="schoolYearEnd" />
+
+          <h4>Semesters</h4>
+          <div id="semestersContainer"></div>
+          <button type="button" class="add-btn" id="addSemesterBtn">+ Add Semester</button>
+
+          <button id="createAcademicYearBtn">Create Academic Year</button>
+          <button id="cancelEditBtn">Cancel Edit</button>
+        </section>
+
+        <!-- Right side: Academic Years Grid -->
+        <section id="academicYearsGrid" class="card-section">
+          <p class="muted">Existing academic years will appear here.</p>
+        </section>
+      </main>
+    </div>
+  </div>
+
+  <script>
+    // User dropdown toggle logic
+    const userIconBtn = document.getElementById('userIconBtn');
+    const userDropdown = document.getElementById('userDropdown');
+    userIconBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      userDropdown.classList.toggle('show');
+      userDropdown.setAttribute('aria-hidden', userDropdown.classList.contains('show') ? 'false' : 'true');
+    });
+    document.addEventListener('click', () => {
+      if (userDropdown.classList.contains('show')) {
+        userDropdown.classList.remove('show');
+        userDropdown.setAttribute('aria-hidden', 'true');
+      }
+    });
+  </script>
+
+  <script type="module" src="js/academic-periods.js"></script>
+</body>
+</html>

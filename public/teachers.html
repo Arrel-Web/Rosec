@@ -1,0 +1,118 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>Rosec Teachers</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  
+  <link rel="stylesheet" href="styles.css" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" />
+
+  <style>
+    /* Sidebar styles (same as your other pages) */
+    .layout {
+      display: flex;
+    }
+    .sidebar {
+      width: 240px;
+      background: #2d3e50;
+      color: white;
+      min-height: 100vh;
+      padding: 20px 10px;
+      box-sizing: border-box;
+      position: fixed;
+      left: 0;
+      top: 0;
+    }
+    .sidebar-header {
+      font-size: 1.5rem;
+      font-weight: bold;
+      margin-bottom: 1rem;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .sidebar-header .logo {
+      font-size: 1.8rem;
+      color: #ffcc00;
+    }
+    .sidebar-nav a {
+      color: #ddd;
+      display: block;
+      padding: 10px 15px;
+      text-decoration: none;
+      margin-bottom: 4px;
+      border-radius: 4px;
+      font-weight: 500;
+    }
+    .sidebar-nav a.active,
+    .sidebar-nav a:hover {
+      background-color: #ffcc00;
+      color: #2d3e50;
+    }
+    /* Main area */
+    .main-area {
+      margin-left: 240px;
+      padding: 20px;
+      min-height: 100vh;
+      background: #fff;
+    }
+    /* Table styles */
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 20px;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
+    th, td {
+      border: 1px solid #ccc;
+      padding: 8px 12px;
+      text-align: left;
+    }
+    th {
+      background-color: #f3f3f3;
+      font-weight: 600;
+    }
+    tbody tr:hover {
+      background-color: #eef4ff;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="layout">
+    <aside class="sidebar">
+      <div class="sidebar-header">
+        <span class="logo"><i class="fa-solid fa-graduation-cap"></i></span>
+        <span class="title">Rosec</span>
+      </div>
+      <nav class="sidebar-nav">
+        <a href="dashboard.html"><i class="fa-solid fa-house"></i> Dashboard</a>
+        <a href="classes.html"><i class="fa-solid fa-book"></i> Classes</a>
+        <a href="students.html"><i class="fa-solid fa-user-graduate"></i> Students</a>
+        <a href="teachers.html" class="active"><i class="fa-solid fa-chalkboard-user"></i> Teachers</a>
+        <a href="academic-periods.html"><i class="fa-solid fa-calendar-days"></i> Academic Periods</a>
+        <a href="settings.html"><i class="fa-solid fa-gear"></i> Settings</a>
+      </nav>
+    </aside>
+
+    <main class="main-area">
+      <h1>Teachers List</h1>
+
+      <table id="teachersTable" aria-live="polite" aria-label="List of teachers">
+        <thead>
+          <tr>
+            <th>Name</th>
+            <th>Email</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr><td colspan="2" style="text-align:center; color:#666;">Loading teachers...</td></tr>
+        </tbody>
+      </table>
+    </main>
+  </div>
+
+  <script type="module" src="js/teachers.js"></script>
+</body>
+</html>

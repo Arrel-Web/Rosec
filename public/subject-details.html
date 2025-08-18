@@ -1,0 +1,126 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Student Grades by Academic Period</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/normalize/8.0.1/normalize.min.css" />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    /* Your existing styles */
+    :root { --bg:#0b1220; --card:#121b2e; --muted:#9fb0d0; --text:#e8eefc; --accent:#4ea1ff; }
+    html, body { height: 100%; font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif; }
+    body { background: radial-gradient(1200px 800px at 20% -10%, #1a2540 0%, var(--bg) 50%), var(--bg); color: var(--text); padding: 24px; }
+    .container { max-width: 1200px; margin: 0 auto; }
+    .card { background: linear-gradient(180deg, rgba(255,255,255,0.04), rgba(255,255,255,0.02)); border:1px solid rgba(255,255,255,0.08); border-radius:16px; box-shadow:0 10px 30px rgba(0,0,0,0.25); margin-bottom:16px; }
+    header { display:flex; justify-content:space-between; align-items:center; gap:16px; margin-bottom:16px; }
+    header h1 { font-size: clamp(18px,2.2vw,26px); margin:0; }
+    header .meta { color: var(--muted); font-size:13px; }
+    .controls { display:grid; grid-template-columns: repeat(6, minmax(120px, 1fr)); gap: 10px; padding:16px 16px 0 16px; }
+    .field { display:flex; flex-direction:column; gap:6px; }
+    .label { font-size:12px; color: var(--muted); }
+    select, input, button { background: var(--card); color: var(--text); border:1px solid rgba(255,255,255,0.1); border-radius:10px; padding:10px 12px; outline:none; }
+    input[readonly] { background: rgba(255,255,255,0.05); cursor:default; }
+    button { background: linear-gradient(180deg,#1e2a48,#15203a); border-color: rgba(78,161,255,0.35); cursor:pointer; font-weight:600; }
+    button:hover { filter: brightness(1.08); }
+    table { width:100%; border-collapse:collapse; }
+    thead th { text-align:left; font-weight:600; font-size:13px; color: var(--muted); padding:12px; }
+    tbody td { padding:12px; border-top:1px dashed rgba(255,255,255,0.08); font-size:14px; }
+    .statusbar { display:flex; justify-content:space-between; gap:12px; padding:12px 16px; border-top:1px solid rgba(255,255,255,0.08); background: rgba(0,0,0,0.18); border-radius:0 0 16px 16px; }
+    .statusbar small { color: var(--muted); }
+    .empty { text-align:center; color: var(--muted); padding:24px; }
+    .summary { margin: 12px 0; font-size: 14px; color: var(--text); line-height:1.5; }
+    .summary b { color: var(--accent); }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <div>
+        <h1>Student Grades</h1>
+        <div class="meta">View grades per class/subject and academic period.</div>
+      </div>
+      <div>
+        <span class="badge" id="authStatus">Checking auth…</span>
+      </div>
+    </header>
+
+    <!-- Filters Card -->
+    <div class="card">
+      <form id="filters" class="controls">
+        <div class="field">
+          <label class="label" for="classId">Class ID</label>
+          <input id="classId" name="classId" readonly />
+        </div>
+        <div class="field">
+          <label class="label" for="subjectId">Subject ID</label>
+          <input id="subjectId" name="subjectId" readonly />
+        </div>
+        <div class="field">
+          <label class="label" for="academicId">Academic Year ID</label>
+          <input id="academicId" name="academicId" readonly />
+        </div>
+        <div class="field">
+          <label class="label" for="term">Term</label>
+          <select id="term" name="term"><option value="" disabled selected>Select term</option></select>
+        </div>
+        <div class="field">
+          <label class="label" for="semester">Semester</label>
+          <select id="semester" name="semester"><option value="" disabled selected>Select semester</option></select>
+        </div>
+        <div class="field">
+          <label class="label" for="schoolYear">School Year</label>
+          <input id="schoolYear" name="schoolYear" readonly />
+        </div>
+      </form>
+      <div style="display:flex; gap:8px; padding:12px 16px 16px 16px;">
+        <button id="exportBtn" type="button" title="Download as CSV">Export CSV</button>
+        <span id="hint" class="label" style="align-self:center"></span>
+      </div>
+      <div id="summary" class="summary"></div>
+    </div>
+
+    <!-- Student Table Card -->
+    <div class="card">
+      <div style="padding:16px; overflow:auto;">
+       <div>Assigned Teacher: <span id="assignedTeacher">Loading…</span></div>
+        <table id="gradesTable">
+          <thead>
+            <tr>
+              <th style="min-width:130px;">Student ID</th>
+              <th style="min-width:220px;">Student Name</th>
+              <th style="min-width:100px;">Grade</th>
+            </tr>
+          </thead>
+          <tbody id="tbody"></tbody>
+        </table>
+      </div>
+      <div class="statusbar">
+        <small id="status">Waiting for data…</small>
+        <small id="count">0 students</small>
+      </div>
+    </div>
+
+    <!-- Add Students Controls -->
+    <div class="card" style="padding:16px; display:flex; flex-direction:column; gap:12px;">
+      <div style="display:flex; gap:8px; align-items:center;">
+        <!-- Add Existing Student -->
+        <select id="selectStudent" style="flex:1;">
+          <option value="">--Select Existing Student--</option>
+        </select>
+        <button id="addExistingStudentBtn" type="button">Add Existing Student</button>
+      </div>
+      <div style="display:flex; gap:8px; align-items:center;">
+        <!-- Add New Student -->
+        <input type="text" id="newStudentId" placeholder="Enter Student ID" style="flex:1;" />
+        <input type="text" id="newStudentName" placeholder="Enter Student Name" style="flex:1;" />
+        <button id="addNewStudentBtn" type="button">Add New Student</button>
+      </div>
+    </div>
+  </div>
+
+  <script type="module" src="js/subjectstudent.js"></script>
+</body>
+</html>

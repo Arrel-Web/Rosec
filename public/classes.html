@@ -1,0 +1,143 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Rosec Classes</title>
+  <link rel="stylesheet" href="styles.css" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" />
+  <style>
+    /* User dropdown */
+    .user-dropdown { display: none; position: absolute; background: white; border: 1px solid #ccc; padding: 10px; right: 10px; top: 50px; width: 200px; box-shadow: 0 2px 6px rgba(0,0,0,0.15); z-index: 100; border-radius: 4px; }
+    .user-dropdown.show { display: block; }
+    .user-btn { background: transparent; border: none; cursor: pointer; padding: 0; }
+    #userAvatar { width: 32px; height: 32px; border-radius: 50%; object-fit: cover; }
+    .divider { margin: 10px 0; border-bottom: 1px solid #ddd; }
+
+    /* Classes and subjects */
+    .class-card, .suggested-item { background: #f9f9f9; padding: 15px; margin: 8px 0; border-radius: 5px; cursor: pointer; transition: background-color 0.2s ease; }
+    .class-card:hover, .suggested-item:hover { background-color: #e0e0e0; }
+    .muted { color: #777; font-style: italic; }
+    .main-area { position: relative; padding: 20px; margin-left: 240px; min-height: 100vh; background: #fff; }
+    .layout { display: flex; }
+    .sidebar { width: 240px; background: #2d3e50; color: white; min-height: 100vh; padding: 20px 10px; box-sizing: border-box; position: fixed; left: 0; top: 0; }
+    .sidebar-header { font-size: 1.5rem; font-weight: bold; margin-bottom: 1rem; display: flex; align-items: center; gap: 10px; }
+    .sidebar-header .logo { font-size: 1.8rem; color: #ffcc00; }
+    .sidebar-nav a { color: #ddd; display: block; padding: 10px 15px; text-decoration: none; margin-bottom: 4px; border-radius: 4px; font-weight: 500; }
+    .sidebar-nav a.active, .sidebar-nav a:hover { background-color: #ffcc00; color: #2d3e50; }
+
+    #subjectsGrid { display: grid; grid-template-columns: repeat(auto-fill,minmax(220px,1fr)); gap: 16px; margin-top: 20px; }
+    .grid-item { background: #f5f5f5; padding: 12px; border-radius: 6px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+    .subject-card h4 { margin: 0 0 6px; font-weight: 600; }
+    #addSubjectFormSection { display: none; margin-top: 20px; }
+  </style>
+</head>
+<body>
+  <div class="layout">
+    <!-- Sidebar -->
+    <aside class="sidebar">
+      <div class="sidebar-header">
+        <span class="logo"><i class="fa-solid fa-graduation-cap"></i></span>
+        <span class="title">Rosec</span>
+      </div>
+      <nav class="sidebar-nav">
+        <a href="dashboard.html"><i class="fa-solid fa-house"></i> Dashboard</a>
+        <a href="classes.html" class="active"><i class="fa-solid fa-book"></i> Classes</a>
+        <a href="students.html"><i class="fa-solid fa-user-graduate"></i> Students</a>
+        <a href="teachers.html"><i class="fa-solid fa-chalkboard-user"></i> Teachers</a>
+        <a href="academic-periods.html"><i class="fa-solid fa-calendar-days"></i> Academic Periods</a>
+        <a href="settings.html"><i class="fa-solid fa-gear"></i> Settings</a>
+      </nav>
+    </aside>
+
+    <!-- Main -->
+    <div class="main-area">
+      <header class="topbar" style="display:flex; justify-content:space-between; align-items:center;">
+        <div class="brand"><h1>Classes</h1></div>
+        <div class="top-actions" style="position: relative;">
+          <div class="user" style="position: relative;">
+            <button id="userIconBtn" class="user-btn">
+              <img id="userAvatar" src="https://static.vecteezy.com/system/resources/previews/000/550/731/original/user-icon-vector.jpg" alt="User avatar" />
+            </button>
+            <div id="userDropdown" class="user-dropdown">
+              <div id="user-name">User Name</div>
+              <div id="user-email"></div>
+              <div id="user-role" style="font-style: italic; color: #666;">Role: Loading...</div>
+              <div class="divider"></div>
+              <button id="signOutBtn" style="width: 100%; padding: 8px; cursor: pointer;">Log out</button>
+            </div>
+          </div>
+        </div>
+      </header>
+
+      <main class="main-content" style="margin-top: 20px;">
+        <div style="display: flex; gap: 30px;">
+          <!-- Left: Create Class + Class List -->
+          <div style="display: flex; gap: 20px; flex-wrap: nowrap; width: 600px; flex-shrink: 0;">
+            <!-- Create Class -->
+            <section id="createClassSection" style="flex: 1 1 280px; padding: 15px; border: 1px solid #ccc; border-radius: 6px; background: #f9f9f9;">
+              <h3>Create New Class</h3>
+              <form id="createClassForm" style="display: flex; flex-direction: column;">
+                <input type="text" id="classIdInput" placeholder="Class ID (e.g. BSCPE-3A)" required style="padding: 8px; margin-bottom: 10px;" />
+                
+                <label for="academicYearSelect">Assign Academic Year</label>
+                <select id="academicYearSelect" style="padding: 8px; margin-bottom: 10px;">
+                  <option value="">Select Academic Year</option>
+                </select>
+                  <button type="submit" style="padding: 8px; background: #2d3e50; color: white; border: none; border-radius: 4px; cursor: pointer;">Create Class</button>
+              </form>
+            </section>
+
+            <!-- Class List -->
+            <section style="flex: 1 1 280px; padding: 15px; border: 1px solid #ccc; border-radius: 6px; background: #f9f9f9;">
+              <div class="card-header"><h3>Class List</h3></div>
+              <div id="suggestedList"><p class="muted">Loading classes...</p></div>
+              <div id="suggested-count" class="muted" style="margin-top: 10px;"></div>
+            </section>
+          </div>
+
+          <!-- Right: Subjects + Add Subject -->
+          <div style="flex: 1; display: flex; flex-direction: column; gap: 20px; max-width: 700px;">
+            <section id="subjectsGrid" class="class-grid" aria-live="polite" aria-label="Subjects for selected class" style="min-height: 200px; border: 1px solid #ccc; border-radius: 6px; padding: 15px; background: #f9f9f9;">
+              <p class="muted">Select a class to view its subjects.</p>
+            </section>
+
+            <section id="addSubjectFormSection" style="display:none; padding: 15px; border: 1px solid #ccc; border-radius: 6px; background: #f9f9f9;">
+              <h3>Add New Subject to <span id="selectedClassName"></span></h3>
+              <form id="addSubjectForm" style="display: flex; flex-direction: column; max-width: 300px;">
+                <input type="hidden" id="selectedClassId" />
+                <input type="text" id="subjectIdInput" placeholder="Subject ID" required style="padding: 8px; margin-bottom: 10px;" />
+                <input type="text" id="subjectNameInput" placeholder="Subject Name" required style="padding: 8px; margin-bottom: 10px;" />
+                <label for="teacherSelect">Assign Teacher:</label>
+                <select id="teacherSelect" style="margin-bottom: 10px;">
+                  <option value="">-- Select Existing Teacher --</option>
+                </select>
+                <p>Or add new teacher:</p>
+                <input type="text" id="newTeacherName" placeholder="New teacher's name" style="margin-bottom: 8px;" />
+                <input type="email" id="newTeacherEmail" placeholder="New teacher's email" style="margin-bottom: 12px;" />
+                <button type="submit" style="padding: 8px; background: #2d3e50; color: white; border: none; border-radius: 4px; cursor: pointer;">Add Subject</button>
+              </form>
+            </section>
+          </div>
+        </div>
+      </main>
+    </div>
+  </div>
+
+  <!-- User dropdown toggle -->
+  <script>
+    const userIconBtn = document.getElementById('userIconBtn');
+    const userDropdown = document.getElementById('userDropdown');
+    userIconBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      userDropdown.classList.toggle('show');
+    });
+    document.addEventListener('click', () => {
+      if (userDropdown.classList.contains('show')) userDropdown.classList.remove('show');
+    });
+  </script>
+
+  <!-- Load module that handles everything else (teachers, classes, academic years) -->
+  <script type="module" src="js/classes.js"></script>
+</body>
+</html>

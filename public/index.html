@@ -24,6 +24,7 @@
       box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
       border-radius: 16px;
       overflow: hidden;
+      position: relative;
     }
 
     .login-image {
@@ -82,6 +83,23 @@
       margin-top: 10px;
       font-size: 14px;
     }
+
+    /* 🔐 Dev Only: Seed Button */
+    #seed-button {
+      position: absolute;
+      bottom: 20px;
+      right: 20px;
+      padding: 8px 16px;
+      font-size: 12px;
+      border-radius: 8px;
+      background: #ccc;
+      border: none;
+      cursor: pointer;
+    }
+
+    #seed-button:hover {
+      background: #999;
+    }
   </style>
 </head>
 <body>
@@ -99,12 +117,18 @@
       </form>
       <p id="error-message"></p>
     </div>
+
+    <!-- 🔘 Dev Button -->
+    <button id="seed-button">Seed Firestore</button>
   </div>
 
-  <!-- Firebase Login Script -->
+  <!-- Firebase Login & Seeding Script -->
   <script type="module">
     import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js';
     import { getAuth, signInWithEmailAndPassword } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js';
+    import {
+      getFirestore, doc, setDoc
+    } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js';
 
     const firebaseConfig = {
       apiKey: "AIzaSyAznHzrOLmLvI98_0P649Tx5TZEwXaNNBs",
@@ -118,6 +142,7 @@
 
     const app = initializeApp(firebaseConfig);
     const auth = getAuth(app);
+    const db = getFirestore(app);
 
     async function login(event) {
       event.preventDefault();
@@ -134,6 +159,93 @@
     }
 
     document.getElementById('loginForm').addEventListener('submit', login);
+
+    // 🔁 Firestore Seeder
+    async function seedFirestore() {
+      try {
+        await setDoc(doc(db, "schoolyear", "sy2024-2025"), {
+          schoolyearId: "sy2024-2025",
+          startDate: new Date("2024-08-01"),
+          endDate: new Date("2025-05-31")
+        });
+
+        await setDoc(doc(db, "term", "term1"), {
+          termId: "term1",
+          name: "Prelim"
+        });
+
+        await setDoc(doc(db, "semester", "sem1"), {
+          semesterId: "sem1",
+          semesterLabel: "1st Semester",
+          startDate: new Date("2024-08-01"),
+          endDate: new Date("2024-12-15"),
+          isActive: true
+        });
+
+        await setDoc(doc(db, "academicyear", "ay1"), {
+          academicyearId: "ay1",
+          schoolyearId: "sy2024-2025",
+          termId: "term1",
+          semesterId: "sem1",
+          startDate: 20240801,
+          endDate: 20241215
+        });
+
+        await setDoc(doc(db, "subjects", "math101"), {
+          subjectId: "math101",
+          name: "Math 101",
+          code: "MTH101"
+        });
+
+        await setDoc(doc(db, "classes", "class1"), {
+          classId: "class1",
+          subjectId: "math101",
+          teacherEmail: "teacher@example.com",
+          academicId: "ay1"
+        });
+
+        await setDoc(doc(db, "classMembers", "member1"), {
+          memberId: "member1",
+          classId: "class1",
+          studentId: "student123",
+          enrolledAt: new Date()
+        });
+
+        await setDoc(doc(db, "students", "student123"), {
+          studentId: "student123",
+          name: "Juan Dela Cruz",
+          program: "BSIT"
+        });
+
+        await setDoc(doc(db, "questions", "qset1"), {
+          questionSetId: "qset1",
+          subjectId: "math101",
+          academicId: "ay1",
+          items: [{ number: 1, correctAnswer: "A" }, { number: 2, correctAnswer: "C" }],
+          createdBy: "teacher@example.com"
+        });
+
+        await setDoc(doc(db, "scannedbatches", "scan1"), {
+          scanId: "scan1",
+          batchId: "batchA",
+          studentId: "student123",
+          classId: "class1",
+          questionId: "qset1",
+          answers: ["A", "C"],
+          score: 2,
+          totalItems: 2,
+          correctedAt: new Date()
+        });
+
+        alert("✅ Firestore successfully seeded!");
+      } catch (err) {
+        console.error("❌ Error seeding Firestore:", err);
+        alert("❌ Failed to seed Firestore");
+      }
+    }
+
+    // 🔘 Attach to seed button
+    document.getElementById('seed-button').addEventListener('click', seedFirestore);
   </script>
 </body>
 </html>
