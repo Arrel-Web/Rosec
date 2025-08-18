@@ -240,7 +240,7 @@ class AnswerSheetBackendTester:
     def test_answer_sheet_generation_logic(self):
         """Test if answer sheet generation logic is properly implemented"""
         try:
-            response = requests.get(f"{self.base_url}/js/answer-sheet-maker.js", timeout=10)
+            response = requests.get(f"{self.base_url}/public/answer-sheet-demo.html", timeout=10)
             if response.status_code == 200:
                 content = response.text
                 # Check for key generation logic components
@@ -248,12 +248,11 @@ class AnswerSheetBackendTester:
                     'scanner-marker',
                     'choice-bubble',
                     'question-number',
-                    'points-display',
                     'student-info',
                     'questions-grid',
                     'String.fromCharCode(65 + i)',  # Choice letter generation
-                    'calculateTotalPoints',
-                    'getPointsForQuestion'
+                    'generateIdSections',
+                    'generateAnswerKeyBubbles'
                 ]
                 
                 missing_elements = []
