@@ -46,7 +46,9 @@ class AnswerSheetBackendTester:
                     'choiceOptions',
                     'generateSheet',
                     'saveTemplate',
-                    'answer-sheet-maker.js'
+                    'studentIdLength',
+                    'subjectIdLength',
+                    'answerKeySection'
                 ]
                 
                 missing_elements = []
