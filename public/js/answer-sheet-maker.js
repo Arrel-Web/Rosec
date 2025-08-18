@@ -63,14 +63,7 @@ onAuthStateChanged(auth, async (user) => {
     loadSubjects();
     loadClasses();
   } else {
-    // For testing purposes, allow basic functionality without authentication
-    console.log('No user authenticated, but allowing basic functionality for testing');
-    userNameEl.textContent = 'Guest User';
-    userEmailEl.textContent = 'guest@example.com';
-    userRoleEl.textContent = 'Role: Guest';
-    
-    // Load some demo data for testing
-    loadDemoData();
+    window.location.href = 'index.html';
   }
 });
 
