@@ -272,38 +272,38 @@ class AnswerSheetBackendTester:
             print(f"Error checking generation logic: {str(e)}")
             return False
 
-    def test_points_configuration_logic(self):
-        """Test if points configuration system is implemented"""
+    def test_answer_key_functionality(self):
+        """Test if answer key functionality is implemented"""
         try:
-            response = requests.get(f"{self.base_url}/js/answer-sheet-maker.js", timeout=10)
+            response = requests.get(f"{self.base_url}/public/answer-sheet-demo.html", timeout=10)
             if response.status_code == 200:
                 content = response.text
-                # Check for points configuration functions
-                points_elements = [
-                    'getPointsConfiguration',
-                    'addPointsRow',
-                    'remove-points-row',
-                    'range-start',
-                    'range-end',
-                    'points-value',
-                    'calculateTotalPoints'
+                # Check for answer key functionality
+                key_elements = [
+                    'currentAnswerKey',
+                    'handleAnswerKeyBubbleClick',
+                    'saveAnswerKey',
+                    'clearAnswerKey',
+                    'key-bubble',
+                    'answerKeySection',
+                    'answerKeyGrid'
                 ]
                 
                 missing_elements = []
-                for element in points_elements:
+                for element in key_elements:
                     if element not in content:
                         missing_elements.append(element)
                 
                 if missing_elements:
-                    print(f"Missing points configuration: {missing_elements}")
+                    print(f"Missing answer key functionality: {missing_elements}")
                     return False
                 
-                print("Points configuration system found")
+                print("Answer key functionality found")
                 return True
             else:
                 return False
         except Exception as e:
-            print(f"Error checking points configuration: {str(e)}")
+            print(f"Error checking answer key functionality: {str(e)}")
             return False
 
 def main():
