@@ -137,38 +137,38 @@ class AnswerSheetBackendTester:
             print(f"Error accessing CSS styles: {str(e)}")
             return False
 
-    def test_firebase_config_presence(self):
-        """Test if Firebase configuration is present in JavaScript"""
+    def test_demo_functionality(self):
+        """Test if demo functionality exists in the HTML"""
         try:
-            response = requests.get(f"{self.base_url}/js/answer-sheet-maker.js", timeout=10)
+            response = requests.get(f"{self.base_url}/public/answer-sheet-demo.html", timeout=10)
             if response.status_code == 200:
                 content = response.text
-                # Check for Firebase configuration
-                firebase_elements = [
-                    'firebaseConfig',
-                    'apiKey',
-                    'authDomain',
-                    'projectId',
-                    'initializeApp',
-                    'getFirestore',
-                    'getAuth'
+                # Check for demo-specific elements
+                demo_elements = [
+                    'Demo Version',
+                    'Midterm Examination',
+                    'Mathematics 101',
+                    'BSIT-3A',
+                    'Student ID Length',
+                    'Subject ID Length',
+                    'Answer Key Configuration'
                 ]
                 
-                missing_elements = []
-                for element in firebase_elements:
+                missing_demo = []
+                for element in demo_elements:
                     if element not in content:
-                        missing_elements.append(element)
+                        missing_demo.append(element)
                 
-                if missing_elements:
-                    print(f"Missing Firebase elements: {missing_elements}")
+                if missing_demo:
+                    print(f"Missing demo elements: {missing_demo}")
                     return False
                 
-                print("Firebase configuration found")
+                print("Demo functionality found")
                 return True
             else:
                 return False
         except Exception as e:
-            print(f"Error checking Firebase config: {str(e)}")
+            print(f"Error checking demo functionality: {str(e)}")
             return False
 
     def test_login_page_accessibility(self):
