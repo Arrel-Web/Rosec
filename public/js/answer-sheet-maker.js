@@ -25,6 +25,8 @@ const auth = getAuth(app);
 const examTitleInput = document.getElementById('examTitle');
 const subjectSelect = document.getElementById('subjectSelect');
 const classSelect = document.getElementById('classSelect');
+const studentIdLengthInput = document.getElementById('studentIdLength');
+const subjectIdLengthInput = document.getElementById('subjectIdLength');
 const totalQuestionsInput = document.getElementById('totalQuestions');
 const choiceOptionsSelect = document.getElementById('choiceOptions');
 const questionsPerColumnInput = document.getElementById('questionsPerColumn');
@@ -96,6 +98,8 @@ async function loadSubjects() {
     });
   } catch (error) {
     console.error('Error loading subjects:', error);
+    // Load demo data if Firebase fails
+    loadDemoSubjects();
   }
 }
 
@@ -114,7 +118,28 @@ async function loadClasses() {
     });
   } catch (error) {
     console.error('Error loading classes:', error);
+    // Load demo data if Firebase fails
+    loadDemoClasses();
   }
+}
+
+// Demo data loaders
+function loadDemoSubjects() {
+  subjectSelect.innerHTML = `
+    <option value="">Select Subject</option>
+    <option value="math101">Mathematics 101</option>
+    <option value="eng101">English 101</option>
+    <option value="sci101">Science 101</option>
+  `;
+}
+
+function loadDemoClasses() {
+  classSelect.innerHTML = `
+    <option value="">Select Class</option>
+    <option value="class1">BSIT-3A</option>
+    <option value="class2">BSCS-2B</option>
+    <option value="class3">BSCPE-4C</option>
+  `;
 }
 
 // Points configuration management
@@ -163,6 +188,14 @@ function generateAnswerSheet() {
   const questionsPerColumn = parseInt(questionsPerColumnInput.value) || 15;
   const selectedSubject = subjectSelect.options[subjectSelect.selectedIndex]?.text || '';
   const selectedClass = classSelect.value || '';
+  const studentIdLength = parseInt(studentIdLengthInput.value) || 8;
+  const subjectIdLength = parseInt(subjectIdLengthInput.value) || 0;
+  
+  // Validate student ID length (mandatory)
+  if (studentIdLength < 1 || studentIdLength > 15) {
+    alert('Student ID length must be between 1 and 15 digits.');
+    return;
+  }
   
   // Get points configuration
   const pointsRanges = getPointsConfiguration();
@@ -194,16 +227,20 @@ function generateAnswerSheet() {
     <div class="student-info">
       <div>
         <strong>Name:</strong> ________________________________<br><br>
-        <strong>Student ID:</strong> ________________________________
+        <strong>Date:</strong> ________________________________
       </div>
       <div>
-        <strong>Date:</strong> ________________________________<br><br>
+        <strong>Section:</strong> ________________________________<br><br>
         <strong>Signature:</strong> ________________________________
       </div>
     </div>
-    
-    <div class="questions-grid">
   `;
+  
+  // Add ID sections
+  sheetHTML += generateIdSections(studentIdLength, subjectIdLength);
+  
+  // Generate questions section
+  sheetHTML += `<div class="questions-grid">`;
   
   // Generate questions in columns
   const columns = Math.ceil(totalQuestions / questionsPerColumn);
@@ -246,8 +283,57 @@ function generateAnswerSheet() {
   sheetPreview.innerHTML = sheetHTML;
   sheetPreview.style.display = 'block';
   
-  // Generate answer key inputs
-  generateAnswerKeyInputs(totalQuestions, choices);
+  // Generate answer key inputs with bubbles
+  generateAnswerKeyBubbles(totalQuestions, choices);
+  
+  // Scroll to preview
+  sheetPreview.scrollIntoView({ behavior: 'smooth' });
+}
+
+function generateIdSections(studentIdLength, subjectIdLength) {
+  let idHTML = '<div class="id-sections">';
+  
+  // Student ID section (mandatory)
+  idHTML += `
+    <div class="id-section">
+      <h4>STUDENT ID (Required)</h4>
+      <div class="id-bubbles">
+        ${Array.from({length: studentIdLength}, (_, digitIndex) => `
+          <div class="digit-column">
+            <div class="digit-label">${digitIndex + 1}</div>
+            ${Array.from({length: 10}, (_, digit) => `
+              <div class="id-bubble" data-type="student" data-digit="${digitIndex}" data-value="${digit}">${digit}</div>
+            `).join('')}
+          </div>
+        `).join('')}
+      </div>
+    </div>
+  `;
+  
+  // Subject ID section (optional)
+  if (subjectIdLength > 0) {
+    idHTML += `
+      <div class="id-section">
+        <h4>SUBJECT ID (Optional)</h4>
+        <div class="id-bubbles">
+          ${Array.from({length: subjectIdLength}, (_, digitIndex) => `
+            <div class="digit-column">
+              <div class="digit-label">${digitIndex + 1}</div>
+              ${Array.from({length: 10}, (_, digit) => `
+                <div class="id-bubble" data-type="subject" data-digit="${digitIndex}" data-value="${digit}">${digit}</div>
+              `).join('')}
+            </div>
+          `).join('')}
+        </div>
+      </div>
+    `;
+  } else {
+    // Add empty section to maintain grid layout
+    idHTML += '<div class="id-section" style="opacity: 0.3;"><h4>Subject ID Disabled</h4><p style="font-size: 12px;">Set length > 0 to enable</p></div>';
+  }
+  
+  idHTML += '</div>';
+  return idHTML;
 }
 
 function getPointsConfiguration() {
@@ -282,46 +368,66 @@ function calculateTotalPoints(pointsRanges, totalQuestions) {
   return total;
 }
 
-function generateAnswerKeyInputs(totalQuestions, choices) {
+function generateAnswerKeyBubbles(totalQuestions, choices) {
   answerKeyGrid.innerHTML = '';
   
   for (let i = 1; i <= totalQuestions; i++) {
     const keyItem = document.createElement('div');
     keyItem.className = 'key-item';
     
-    const select = document.createElement('select');
-    select.className = 'input';
-    select.dataset.question = i;
+    const questionNumber = document.createElement('div');
+    questionNumber.className = 'key-question-number';
+    questionNumber.textContent = `Q${i}`;
     
-    // Add empty option
-    const emptyOption = document.createElement('option');
-    emptyOption.value = '';
-    emptyOption.textContent = '--';
-    select.appendChild(emptyOption);
+    const choicesContainer = document.createElement('div');
+    choicesContainer.className = 'key-choices';
     
-    // Add choice options
     choices.forEach(choice => {
-      const option = document.createElement('option');
-      option.value = choice;
-      option.textContent = choice;
-      select.appendChild(option);
+      const bubble = document.createElement('div');
+      bubble.className = 'key-bubble';
+      bubble.setAttribute('data-question', i);
+      bubble.setAttribute('data-choice', choice);
+      bubble.setAttribute('data-choice', choice);
+      bubble.title = `Question ${i} - Choice ${choice}`;
+      
+      // Check if this choice is already selected
+      if (currentAnswerKey[i] === choice) {
+        bubble.classList.add('selected');
+      }
+      
+      bubble.addEventListener('click', (e) => {
+        handleAnswerKeyBubbleClick(e, i, choice);
+      });
+      
+      choicesContainer.appendChild(bubble);
     });
     
-    // Set saved value if exists
-    if (currentAnswerKey[i]) {
-      select.value = currentAnswerKey[i];
-    }
-    
-    select.addEventListener('change', (e) => {
-      currentAnswerKey[i] = e.target.value;
-    });
-    
-    keyItem.innerHTML = `<strong>Q${i}</strong>`;
-    keyItem.appendChild(select);
+    keyItem.appendChild(questionNumber);
+    keyItem.appendChild(choicesContainer);
     answerKeyGrid.appendChild(keyItem);
   }
   
   answerKeySection.style.display = 'block';
+}
+
+function handleAnswerKeyBubbleClick(event, questionNumber, choice) {
+  const bubble = event.target;
+  const allBubblesForQuestion = document.querySelectorAll(`[data-question="${questionNumber}"].key-bubble`);
+  
+  // If this bubble is already selected, unselect it
+  if (bubble.classList.contains('selected')) {
+    bubble.classList.remove('selected');
+    delete currentAnswerKey[questionNumber];
+  } else {
+    // Unselect all other bubbles for this question
+    allBubblesForQuestion.forEach(b => b.classList.remove('selected'));
+    
+    // Select this bubble
+    bubble.classList.add('selected');
+    currentAnswerKey[questionNumber] = choice;
+  }
+  
+  console.log('Current Answer Key:', currentAnswerKey);
 }
 
 // Save template
@@ -337,6 +443,8 @@ async function saveTemplate() {
   const subjectId = subjectSelect.value;
   const classId = classSelect.value;
   const totalQuestions = parseInt(totalQuestionsInput.value) || 30;
+  const studentIdLength = parseInt(studentIdLengthInput.value) || 8;
+  const subjectIdLength = parseInt(subjectIdLengthInput.value) || 0;
   
   if (!subjectId || !classId) {
     alert('Please select both subject and class.');
@@ -365,6 +473,8 @@ async function saveTemplate() {
       subjectId,
       classId,
       totalQuestions,
+      studentIdLength,
+      subjectIdLength,
       items,
       pointsConfiguration: getPointsConfiguration(),
       choiceOptions: parseInt(choiceOptionsSelect.value),
@@ -391,22 +501,25 @@ async function saveTemplate() {
 
 // Save answer key
 document.getElementById('saveAnswerKey').addEventListener('click', () => {
-  if (!currentQuestionSetId) {
-    alert('Please save the template first.');
+  if (Object.keys(currentAnswerKey).length === 0) {
+    alert('Please set at least one answer first.');
     return;
   }
   
-  // Answer key is automatically updated when selections change
-  alert('Answer key updated! Remember to save the template to persist changes.');
+  alert(`Answer key updated with ${Object.keys(currentAnswerKey).length} answers! Remember to save the template to persist changes.`);
+  console.log('Current Answer Key:', currentAnswerKey);
 });
 
 // Clear answer key
 document.getElementById('clearAnswerKey').addEventListener('click', () => {
-  currentAnswerKey = {};
-  const selects = answerKeyGrid.querySelectorAll('select');
-  selects.forEach(select => {
-    select.value = '';
-  });
+  if (confirm('Are you sure you want to clear all answers?')) {
+    currentAnswerKey = {};
+    const allBubbles = document.querySelectorAll('.key-bubble.selected');
+    allBubbles.forEach(bubble => {
+      bubble.classList.remove('selected');
+    });
+    console.log('Answer key cleared');
+  }
 });
 
 // Print functionality
@@ -431,6 +544,24 @@ totalQuestionsInput.addEventListener('change', () => {
   }
 });
 
+// Validate student ID length
+studentIdLengthInput.addEventListener('change', (e) => {
+  const value = parseInt(e.target.value);
+  if (value < 1 || value > 15) {
+    alert('Student ID length must be between 1 and 15 digits.');
+    e.target.value = Math.max(1, Math.min(15, value || 8));
+  }
+});
+
+// Validate subject ID length
+subjectIdLengthInput.addEventListener('change', (e) => {
+  const value = parseInt(e.target.value);
+  if (value < 0 || value > 8) {
+    alert('Subject ID length must be between 0 and 8 digits.');
+    e.target.value = Math.max(0, Math.min(8, value || 0));
+  }
+});
+
 // Logout functionality
 document.getElementById('signOutBtn').addEventListener('click', () => {
   signOut(auth).then(() => {
@@ -441,23 +572,11 @@ document.getElementById('signOutBtn').addEventListener('click', () => {
   });
 });
 
-// Load demo data for testing
-function loadDemoData() {
-  // Add demo subjects
-  subjectSelect.innerHTML = `
-    <option value="">Select Subject</option>
-    <option value="math101">Mathematics 101</option>
-    <option value="eng101">English 101</option>
-    <option value="sci101">Science 101</option>
-  `;
-  
-  // Add demo classes
-  classSelect.innerHTML = `
-    <option value="">Select Class</option>
-    <option value="class1">BSIT-3A</option>
-    <option value="class2">BSCS-2B</option>
-    <option value="class3">BSCPE-4C</option>
-  `;
+// Initialize demo data if Firebase is not available
+if (!navigator.onLine) {
+  console.log('Offline mode - loading demo data');
+  loadDemoSubjects();
+  loadDemoClasses();
 }
 
 console.log('Answer Sheet Maker loaded successfully');
