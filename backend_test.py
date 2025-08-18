@@ -69,20 +69,19 @@ class AnswerSheetBackendTester:
             print(f"Error accessing page: {str(e)}")
             return False
 
-    def test_javascript_file_accessibility(self):
-        """Test if JavaScript file is accessible"""
+    def test_javascript_functionality(self):
+        """Test if JavaScript functionality is embedded in HTML"""
         try:
-            response = requests.get(f"{self.base_url}/js/answer-sheet-maker.js", timeout=10)
+            response = requests.get(f"{self.base_url}/public/answer-sheet-demo.html", timeout=10)
             if response.status_code == 200:
                 content = response.text
-                # Check for key JavaScript functions
+                # Check for key JavaScript functions embedded in HTML
                 required_functions = [
                     'generateAnswerSheet',
-                    'saveTemplate',
-                    'loadSubjects',
-                    'loadClasses',
-                    'getPointsConfiguration',
-                    'generateAnswerKeyInputs'
+                    'generateIdSections',
+                    'generateAnswerKeyBubbles',
+                    'handleAnswerKeyBubbleClick',
+                    'currentAnswerKey'
                 ]
                 
                 missing_functions = []
@@ -100,7 +99,7 @@ class AnswerSheetBackendTester:
                 print(f"HTTP Status: {response.status_code}")
                 return False
         except Exception as e:
-            print(f"Error accessing JavaScript file: {str(e)}")
+            print(f"Error accessing JavaScript functionality: {str(e)}")
             return False
 
     def test_css_styles_accessibility(self):
