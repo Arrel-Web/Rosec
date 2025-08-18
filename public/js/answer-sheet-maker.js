@@ -63,7 +63,15 @@ onAuthStateChanged(auth, async (user) => {
     loadSubjects();
     loadClasses();
   } else {
-    window.location.href = 'index.html';
+    // Demo mode for testing - load demo data instead of redirecting
+    console.log('Demo mode enabled for testing');
+    userNameEl.textContent = 'Demo User';
+    userEmailEl.textContent = 'demo@test.com';
+    userRoleEl.textContent = 'Role: Demo';
+    
+    loadDemoData();
+    // Comment out redirect for testing
+    // window.location.href = 'index.html';
   }
 });
 
