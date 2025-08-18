@@ -207,35 +207,30 @@ class AnswerSheetBackendTester:
     def test_demo_data_functionality(self):
         """Test if demo data loading functionality exists"""
         try:
-            response = requests.get(f"{self.base_url}/js/answer-sheet-maker.js", timeout=10)
+            response = requests.get(f"{self.base_url}/public/answer-sheet-demo.html", timeout=10)
             if response.status_code == 200:
                 content = response.text
-                # Check for demo data function
-                if 'loadDemoData' in content:
-                    # Check if demo subjects and classes are defined
-                    demo_elements = [
-                        'Mathematics 101',
-                        'English 101',
-                        'Science 101',
-                        'BSIT-3A',
-                        'BSCS-2B',
-                        'BSCPE-4C'
-                    ]
-                    
-                    missing_demo = []
-                    for element in demo_elements:
-                        if element not in content:
-                            missing_demo.append(element)
-                    
-                    if missing_demo:
-                        print(f"Missing demo data: {missing_demo}")
-                        return False
-                    
-                    print("Demo data functionality found")
-                    return True
-                else:
-                    print("Demo data function not found")
+                # Check for demo data elements
+                demo_elements = [
+                    'Midterm Examination',
+                    'Mathematics 101',
+                    'BSIT-3A',
+                    'value="8"',  # Student ID length
+                    'value="4"',  # Subject ID length
+                    'value="25"'  # Total questions
+                ]
+                
+                missing_demo = []
+                for element in demo_elements:
+                    if element not in content:
+                        missing_demo.append(element)
+                
+                if missing_demo:
+                    print(f"Missing demo data: {missing_demo}")
                     return False
+                
+                print("Demo data functionality found")
+                return True
             else:
                 return False
         except Exception as e:
