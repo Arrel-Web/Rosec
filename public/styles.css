@@ -73,16 +73,46 @@ body { background: linear-gradient(180deg,#fafafa,#f1f3f4); color: #202124; min-
 .top-actions { display:flex; align-items:center; gap:12px; }
 .suggested-pill { background:#e8f0fe; color:#1967d2; padding:6px 10px; border-radius:20px; font-weight:600; font-size:13px; }
 
-/* User icon slightly higher */
-.user { position: relative; margin-top: -8px; }
-.user-btn { background:transparent; border:0; padding:0; cursor:pointer; border-radius:50%; }
-.user-btn img { width:44px; height:44px; border-radius:50%; box-shadow: 0 1px 4px rgba(0,0,0,0.12); }
-
-.user-dropdown {
-  display:none; position:absolute; right:0; top:56px; width:220px;
-  background:white; box-shadow:0 6px 18px rgba(0,0,0,0.12); border-radius:8px; padding:12px;
+/* User icon updated for consistency */
+.user {
+  position: relative;
+  margin-top: -8px;
 }
-.user-dropdown.show { display:block; }
+.user-btn {
+  background: transparent !important;
+  border: 0 !important;
+  padding: 0 !important;
+  cursor: pointer !important;
+  border-radius: 50% !important;
+  width: 56px !important;
+  height: 56px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+}
+.user-btn img#userAvatar {
+  width: 100% !important;
+  height: 100% !important;
+  border-radius: 50% !important;
+  object-fit: cover !important;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.2) !important;
+  display: block !important;
+}
+
+/* User dropdown */
+.user-dropdown {
+  display: none;
+  position: absolute;
+  background: white;
+  border: 1px solid #ccc;
+  padding: 12px;
+  right: 0;
+  top: 64px; /* adjusted to match bigger icon */
+  width: 200px;
+  box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+  z-index: 10000 !important;
+}
+.user-dropdown.show { display: block !important; }
 .user-dropdown .divider { height:1px; background:#eee; margin:8px 0; }
 .user-dropdown button { background:#f5f7f9; border:0; padding:8px 10px; border-radius:6px; cursor:pointer; width:100%; }
 
@@ -96,23 +126,7 @@ body { background: linear-gradient(180deg,#fafafa,#f1f3f4); color: #202124; min-
 .card-header { margin-bottom:12px; }
 .suggested-list { min-height:82px; display:flex; flex-direction:column; gap:8px; }
 .suggested-item {
-  border-radius: 8px;
-  padding: 12px;
-  background: #fff;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  cursor: pointer;
-}
-.suggested-item {
-  width: 300px;       /* fixed width */
-  /* or */
-  max-width: 300px;   /* max width, can shrink smaller */
-  /* or */
-  min-width: 250px;   /* minimum width */
-  
-  /* keep the existing styles */
+  width: 300px;
   border-radius: 8px;
   padding: 12px;
   background: #fff;
@@ -136,6 +150,8 @@ body { background: linear-gradient(180deg,#fafafa,#f1f3f4); color: #202124; min-
 .fab-menu { display:none; flex-direction:column; align-items:flex-end; gap:8px; margin-bottom:8px; }
 .fab-menu.show { display:flex; }
 .fab-item { background:white; border-radius:8px; padding:10px 14px; border:0; box-shadow:0 4px 12px rgba(0,0,0,0.08); cursor:pointer; }
+
+/* FAB menu alternative style */
 .fab-menu {
   display: none;
   position: absolute;
@@ -148,11 +164,7 @@ body { background: linear-gradient(180deg,#fafafa,#f1f3f4); color: #202124; min-
   width: 150px;
   z-index: 1000;
 }
-
-.fab-menu.show {
-  display: block;
-}
-
+.fab-menu.show { display: block; }
 .fab-item {
   background: none;
   border: none;
@@ -163,11 +175,7 @@ body { background: linear-gradient(180deg,#fafafa,#f1f3f4); color: #202124; min-
   font-size: 14px;
   color: #333;
 }
-
-.fab-item:hover {
-  background-color: #f0f0f0;
-}
-
+.fab-item:hover { background-color: #f0f0f0; }
 .fab {
   position: fixed;
   bottom: 20px;
@@ -195,29 +203,13 @@ body { background: linear-gradient(180deg,#fafafa,#f1f3f4); color: #202124; min-
 /* small helpers */
 .muted { color:#70757a; font-size:13px; }
 
-.user-dropdown {
-  display: none;
-  position: absolute;
-  background: white;
-  border: 1px solid #ccc;
-  padding: 12px;
-  right: 0;
-  top: 40px;
-  width: 200px;
-  box-shadow: 0 4px 8px rgba(0,0,0,0.1);
-  z-index: 1000;
-}
-
-.user-dropdown.show {
-  display: block;
-}
+/* Class grid */
 .class-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(1000px, 1fr)); /* responsive columns */
+  grid-template-columns: repeat(auto-fill, minmax(1000px, 1fr));
   gap: 1rem;
   padding: 1rem;
 }
-
 .class-grid > .card {
-  height: 150px; /* example fixed height for uniformity */
+  height: 150px;
 }

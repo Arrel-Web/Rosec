@@ -1,9 +1,19 @@
 // js/academic-periods.js
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.4.0/firebase-app.js";
-import { getFirestore, doc, setDoc, getDoc, collection, getDocs, Timestamp } from "https://www.gstatic.com/firebasejs/10.4.0/firebase-firestore.js";
-import { getAuth, onAuthStateChanged, signOut } 
-  from "https://www.gstatic.com/firebasejs/10.4.0/firebase-auth.js";
-// Firebase config
+import {
+  getFirestore,
+  doc,
+  setDoc,
+  getDoc,
+  collection,
+  getDocs,
+  query,
+  where,
+  Timestamp
+} from "https://www.gstatic.com/firebasejs/10.4.0/firebase-firestore.js";
+import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.4.0/firebase-auth.js";
+
+// --- Firebase config ---
 const firebaseConfig = {
   apiKey: "AIzaSyAznHzrOLmLvI98_0P649Tx5TZEwXaNNBs",
   authDomain: "rosec-57d1d.firebaseapp.com",
@@ -19,11 +29,6 @@ const db = getFirestore(app);
 const auth = getAuth(app);
 
 // --- Form Elements ---
-const userNameEl = document.getElementById("user-name");
-const userEmailEl = document.getElementById("user-email");
-const userRoleEl = document.getElementById("user-role");
-const signOutBtn = document.getElementById("signOutBtn");
-
 const academicYearIdInput = document.getElementById('academicYearId');
 const schoolYearIdInput = document.getElementById('schoolYearId');
 const schoolYearStartInput = document.getElementById('schoolYearStart');
@@ -32,8 +37,8 @@ const createBtn = document.getElementById('createAcademicYearBtn');
 const cancelEditBtn = document.getElementById('cancelEditBtn');
 const semestersContainer = document.getElementById('semestersContainer');
 const addSemesterBtn = document.getElementById('addSemesterBtn');
-
 const academicYearsGrid = document.getElementById('academicYearsGrid');
+
 let editModeId = null;
 
 // --- Clear Form ---
@@ -74,7 +79,6 @@ function createTermBlock() {
 function createSemesterBlock() {
   const semesterDiv = document.createElement('div');
   semesterDiv.className = 'semester-block';
-
   semesterDiv.innerHTML = `
     <div class="semester-header">
       <h5>Semester</h5>
@@ -87,17 +91,13 @@ function createSemesterBlock() {
     <div class="terms-container"></div>
     <button type="button" class="add-btn add-term-btn">+ Add Term</button>
   `;
-
   semesterDiv.querySelector('.remove-btn').addEventListener('click', () => semesterDiv.remove());
-
   const addTermBtn = semesterDiv.querySelector('.add-term-btn');
   const termsContainer = semesterDiv.querySelector('.terms-container');
-
   addTermBtn.addEventListener('click', () => {
     const termBlock = createTermBlock();
     termsContainer.appendChild(termBlock);
   });
-
   return semesterDiv;
 }
 
@@ -158,7 +158,7 @@ createBtn.addEventListener('click', async () => {
       createdAt: Timestamp.fromDate(new Date())
     });
 
-    // Save semesters & terms separately
+    // Save semesters & terms
     for (const sem of semesters) {
       await setDoc(doc(db, 'semester', sem.semId), {
         name: sem.semLabel,
@@ -174,7 +174,7 @@ createBtn.addEventListener('click', async () => {
       }
     }
 
-    // Save academic year with nested semesters
+    // Save academic year
     await setDoc(doc(db, 'academicyear', academicYearId), {
       academicYearId,
       schoolYearId,
@@ -185,35 +185,28 @@ createBtn.addEventListener('click', async () => {
     alert(editModeId ? 'Academic Year updated!' : 'Academic Year created!');
     clearForm();
     loadAcademicYears();
-
   } catch (error) {
     console.error(error);
     alert('Error saving academic year. Check console.');
   }
 });
 
-// --- Load Academic Years (show only names) ---
+// --- Load Academic Years ---
 async function loadAcademicYears() {
   academicYearsGrid.innerHTML = '<p class="muted">Loading...</p>';
   try {
     const snapshot = await getDocs(collection(db, 'academicyear'));
     academicYearsGrid.innerHTML = '';
-
     if (snapshot.empty) {
       academicYearsGrid.innerHTML = '<p class="muted">No academic years yet.</p>';
       return;
     }
-
     for (const docSnap of snapshot.docs) {
       const data = docSnap.data();
       const card = document.createElement('div');
       card.className = 'academic-year-card';
-
-      // Correct field names
       const academicYearDisplay = data.academicYearId || 'N/A';
       const schoolYearDisplay = data.schoolYearId || 'N/A';
-
-      // Semesters & Terms
       let semestersHtml = '';
       if (data.semesters && data.semesters.length) {
         data.semesters.forEach(sem => {
@@ -223,30 +216,23 @@ async function loadAcademicYears() {
               termsHtml += `<div><span class="label">Term:</span> <span class="value">${term.termName || 'N/A'}</span></div>`;
             });
           }
-          semestersHtml += `
-            <div><span class="label">Semester:</span> <span class="value">${sem.semLabel || 'N/A'}</span></div>
-            ${termsHtml}
-          `;
+          semestersHtml += `<div><span class="label">Semester:</span> <span class="value">${sem.semLabel || 'N/A'}</span></div>${termsHtml}`;
         });
       }
 
-      // Build card
       card.innerHTML = `
         <h5>Academic Year: ${academicYearDisplay}</h5>
         <div><span class="label">School Year:</span> <span class="value">${schoolYearDisplay}</span></div>
         ${semestersHtml || '<div class="muted">No semesters yet</div>'}
       `;
 
-      // Edit on click
       card.addEventListener('click', () => {
-        editModeId = docSnap.id; 
+        editModeId = docSnap.id;
         academicYearIdInput.value = data.academicYearId || '';
         academicYearIdInput.disabled = false;
-
         schoolYearIdInput.value = data.schoolYearId || '';
-
-        // Load semesters & terms into form
         semestersContainer.innerHTML = '';
+
         if (data.semesters && data.semesters.length) {
           for (const sem of data.semesters) {
             const semBlock = createSemesterBlock();
@@ -258,7 +244,6 @@ async function loadAcademicYears() {
             semBlock.querySelector('.semester-end').value = sem.semEnd
               ? new Date(sem.semEnd.toDate ? sem.semEnd.toDate() : sem.semEnd).toISOString().split('T')[0]
               : '';
-
             const termsContainer = semBlock.querySelector('.terms-container');
             if (sem.terms && sem.terms.length) {
               for (const term of sem.terms) {
@@ -286,49 +271,69 @@ async function loadAcademicYears() {
 // --- Initial Load ---
 loadAcademicYears();
 
-// Track user
-onAuthStateChanged(auth, async (user) => {
-  if (user) {
-    userNameEl.textContent = user.displayName || "No Name";
-    userEmailEl.textContent = user.email || "";
+// --- User Dropdown ---
+const userBtn = document.getElementById('userIconBtn');
+const userDropdown = document.getElementById('userDropdown');
+const userNameE = document.getElementById('user-name');
+const userEmail = document.getElementById('user-email');
+const userRole = document.getElementById('user-role');
+const signOutBtn = document.getElementById('signOutBtn');
 
-    // 🔎 Get role from Firestore (assuming you save roles in "users" collection)
-    try {
-      const userDoc = await getDoc(doc(db, "users", user.uid));
-      if (userDoc.exists()) {
-        const data = userDoc.data();
-        userRoleEl.textContent = `Role: ${data.role || "N/A"}`;
-      } else {
-        userRoleEl.textContent = "Role: Not assigned";
-      }
-    } catch (err) {
-      console.error("Error fetching role:", err);
-      userRoleEl.textContent = "Role: Error";
-    }
-  } else {
-    // Not logged in
-    userNameEl.textContent = "Guest";
-    userEmailEl.textContent = "";
-    userRoleEl.textContent = "Role: None";
+// Toggle dropdown on click
+userBtn.addEventListener('click', (e) => {
+  e.stopPropagation();
+  userDropdown.classList.toggle('show');
+});
+
+// Close dropdown when clicking outside
+document.addEventListener('click', () => {
+  userDropdown.classList.remove('show');
+});
+
+// Close dropdown with Escape key
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape') {
+    userDropdown.classList.remove('show');
   }
 });
 
-// Handle logout
-if (signOutBtn) {
-  signOutBtn.addEventListener("click", async () => {
+// --- Firebase Auth: Show current user info ---
+onAuthStateChanged(auth, async (user) => {
+  if (user) {
     try {
-      await signOut(auth);
-      window.location.href = "index.html"; // redirect to login
+      const usersCol = collection(db, 'users');
+      const q = query(usersCol, where('email', '==', user.email));
+      const querySnapshot = await getDocs(q);
+
+      if (!querySnapshot.empty) {
+        const userData = querySnapshot.docs[0].data();
+        userNameE.textContent = userData.name || user.displayName || 'User Name';
+        userEmail.textContent = userData.email || 'N/A';
+        userRole.textContent = `Role: ${userData.role || 'N/A'}`;
+      } else {
+        userNameE.textContent = user.displayName || 'User Name';
+        userEmail.textContent = 'N/A';
+        userRole.textContent = 'Role: N/A';
+      }
     } catch (err) {
-      console.error("Error signing out:", err);
+      console.error('Error fetching user:', err);
+      userNameE.textContent = user.displayName || 'User Name';
+      userEmail.textContent = 'N/A';
+      userRole.textContent = 'Role: N/A';
     }
-  });
-}
-//user icon
-if (userIconBtn && userDropdown) {
-  userIconBtn.addEventListener('click', (e) => {
-    e.stopPropagation();
-    userDropdown.classList.toggle('show');
-  });
-  document.addEventListener('click', () => userDropdown.classList.remove('show'));
-}
+  } else {
+    userNameE.textContent = 'User Name';
+    userEmail.textContent = 'N/A';
+    userRole.textContent = 'Role: N/A';
+  }
+});
+
+// --- Sign out ---
+signOutBtn.addEventListener('click', async () => {
+  try {
+    await signOut(auth);
+    window.location.href = 'login.html';
+  } catch (err) {
+    console.error('Error signing out:', err);
+  }
+});

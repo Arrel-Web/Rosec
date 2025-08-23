@@ -207,7 +207,7 @@ async function loadSuggestedClasses(userEmail, role) {
 // Auth listener
 onAuthStateChanged(auth, async (user) => {
   if (user) {
-    userNameEl.textContent = user.displayName || 'User';
+    userNameEl.textContent = user.displayName || 'User Name:';
     userEmailEl.textContent = user.email;
 
     const role = await getUserRole(user.email);
