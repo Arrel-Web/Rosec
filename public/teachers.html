@@ -61,21 +61,116 @@
     table {
       width: 100%;
       border-collapse: collapse;
-      margin-top: 20px;
+      margin-top: 0;
       font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
     }
     th, td {
-      border: 1px solid #ccc;
-      padding: 8px 12px;
+      border: 1px solid #e6e6e6;
+      padding: 10px 14px;
       text-align: left;
     }
     th {
-      background-color: #f3f3f3;
+      background-color: #f8f8f8;
       font-weight: 600;
+      position: sticky;
+      top: 0;
+      z-index: 1;
+    }
+    tbody tr:nth-child(even) {
+      background-color: #fafafa;
     }
     tbody tr:hover {
       background-color: #eef4ff;
     }
+    /* New: header and modal styles */
+    .header-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 12px;
+    }
+    .primary-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: linear-gradient(135deg, #ffcc00, #ffdd55);
+      color: #2d3e50;
+      border: none;
+      padding: 10px 14px;
+      border-radius: 8px;
+      font-weight: 700;
+      cursor: pointer;
+      box-shadow: 0 6px 14px rgba(255, 204, 0, 0.35);
+      transition: transform 120ms ease, box-shadow 120ms ease, filter 120ms ease;
+    }
+    .primary-btn i { pointer-events: none; }
+    .primary-btn:hover {
+      filter: brightness(0.98);
+      box-shadow: 0 8px 18px rgba(255, 204, 0, 0.45);
+      transform: translateY(-1px);
+    }
+    .primary-btn:active { transform: translateY(0); }
+    .primary-btn:focus-visible {
+      outline: 3px solid rgba(255,204,0,0.6);
+      outline-offset: 2px;
+    }
+    .table-card {
+      background: #fff;
+      border: 1px solid #eee;
+      border-radius: 12px;
+      box-shadow: 0 10px 24px rgba(0,0,0,0.06);
+      overflow: hidden;
+    }
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.5);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+    }
+    .modal {
+      background: #fff;
+      width: min(640px, 92vw);
+      max-height: 90vh;
+      overflow: auto;
+      border-radius: 12px;
+      padding: 16px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+      animation: modalIn 180ms ease-out;
+    }
+    @keyframes modalIn {
+      from { opacity: 0; transform: translateY(6px) scale(0.98); }
+      to { opacity: 1; transform: translateY(0) scale(1); }
+    }
+    .modal-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      margin-bottom: 8px;
+    }
+    .modal-header h3 {
+      margin: 0;
+      font-size: 1.1rem;
+      color: #2d3e50;
+    }
+    .icon-btn {
+      background: transparent;
+      border: none;
+      border-radius: 6px;
+      width: 36px;
+      height: 36px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      color: #555;
+    }
+    .icon-btn:hover { background: #f2f2f2; }
+    .hidden { display: none; }
   </style>
 </head>
 <body>
@@ -98,19 +193,34 @@
     </aside>
 
     <main class="main-area">
-      <h1>Teachers List</h1>
+      <div class="header-row">
+        <h1>Teachers List</h1>
+        <button id="addTeacherBtn" class="primary-btn" title="Add Teacher" aria-label="Add Teacher"><i class="fa-solid fa-plus"></i> Add Teacher</button>
+      </div>
 
-      <table id="teachersTable" aria-live="polite" aria-label="List of teachers">
-        <thead>
-          <tr>
-            <th>Name</th>
-            <th>Email</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr><td colspan="2" style="text-align:center; color:#666;">Loading teachers...</td></tr>
-        </tbody>
-      </table>
+      <div class="table-card">
+        <table id="teachersTable" aria-live="polite" aria-label="List of teachers">
+          <thead>
+            <tr>
+              <th>Name</th>
+              <th>Email</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr><td colspan="2" style="text-align:center; color:#666;">Loading teachers...</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div id="modalOverlay" class="modal-overlay hidden" aria-hidden="true">
+        <div class="modal" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+          <div class="modal-header">
+            <h3 id="modalTitle">Add Teacher</h3>
+            <button id="closeModal" class="icon-btn" aria-label="Close"><i class="fa-solid fa-xmark"></i></button>
+          </div>
+          <div id="modalContent"></div>
+        </div>
+      </div>
     </main>
   </div>
 
