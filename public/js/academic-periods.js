@@ -1,7 +1,8 @@
 // js/academic-periods.js
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.4.0/firebase-app.js";
 import { getFirestore, doc, setDoc, getDoc, collection, getDocs, Timestamp } from "https://www.gstatic.com/firebasejs/10.4.0/firebase-firestore.js";
-
+import { getAuth, onAuthStateChanged, signOut } 
+  from "https://www.gstatic.com/firebasejs/10.4.0/firebase-auth.js";
 // Firebase config
 const firebaseConfig = {
   apiKey: "AIzaSyAznHzrOLmLvI98_0P649Tx5TZEwXaNNBs",
@@ -15,8 +16,14 @@ const firebaseConfig = {
 
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
+const auth = getAuth(app);
 
 // --- Form Elements ---
+const userNameEl = document.getElementById("user-name");
+const userEmailEl = document.getElementById("user-email");
+const userRoleEl = document.getElementById("user-role");
+const signOutBtn = document.getElementById("signOutBtn");
+
 const academicYearIdInput = document.getElementById('academicYearId');
 const schoolYearIdInput = document.getElementById('schoolYearId');
 const schoolYearStartInput = document.getElementById('schoolYearStart');
@@ -278,3 +285,50 @@ async function loadAcademicYears() {
 
 // --- Initial Load ---
 loadAcademicYears();
+
+// Track user
+onAuthStateChanged(auth, async (user) => {
+  if (user) {
+    userNameEl.textContent = user.displayName || "No Name";
+    userEmailEl.textContent = user.email || "";
+
+    // 🔎 Get role from Firestore (assuming you save roles in "users" collection)
+    try {
+      const userDoc = await getDoc(doc(db, "users", user.uid));
+      if (userDoc.exists()) {
+        const data = userDoc.data();
+        userRoleEl.textContent = `Role: ${data.role || "N/A"}`;
+      } else {
+        userRoleEl.textContent = "Role: Not assigned";
+      }
+    } catch (err) {
+      console.error("Error fetching role:", err);
+      userRoleEl.textContent = "Role: Error";
+    }
+  } else {
+    // Not logged in
+    userNameEl.textContent = "Guest";
+    userEmailEl.textContent = "";
+    userRoleEl.textContent = "Role: None";
+  }
+});
+
+// Handle logout
+if (signOutBtn) {
+  signOutBtn.addEventListener("click", async () => {
+    try {
+      await signOut(auth);
+      window.location.href = "index.html"; // redirect to login
+    } catch (err) {
+      console.error("Error signing out:", err);
+    }
+  });
+}
+//user icon
+if (userIconBtn && userDropdown) {
+  userIconBtn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    userDropdown.classList.toggle('show');
+  });
+  document.addEventListener('click', () => userDropdown.classList.remove('show'));
+}

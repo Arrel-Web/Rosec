@@ -125,19 +125,6 @@
     </div>
   </div>
 
-  <!-- User dropdown toggle -->
-  <script>
-    const userIconBtn = document.getElementById('userIconBtn');
-    const userDropdown = document.getElementById('userDropdown');
-    userIconBtn.addEventListener('click', (e) => {
-      e.stopPropagation();
-      userDropdown.classList.toggle('show');
-    });
-    document.addEventListener('click', () => {
-      if (userDropdown.classList.contains('show')) userDropdown.classList.remove('show');
-    });
-  </script>
-
   <!-- Load module that handles everything else (teachers, classes, academic years) -->
   <script type="module" src="js/classes.js"></script>
 </body>

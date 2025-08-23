@@ -7,6 +7,55 @@
   <link rel="stylesheet" href="styles.css" />
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" />
   <style>
+    .layout {
+    display: flex;
+  }
+  .sidebar {
+    width: 240px;
+    background: #2d3e50;
+    color: white;
+    min-height: 100vh;
+    padding: 20px 10px;
+    box-sizing: border-box;
+    position: fixed;
+    left: 0;
+    top: 0;
+  }
+  .sidebar-header {
+    font-size: 1.5rem;
+    font-weight: bold;
+    margin-bottom: 1rem;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .sidebar-header .logo {
+    font-size: 1.8rem;
+    color: #ffcc00;
+  }
+  .sidebar-nav a {
+    color: #ddd;
+    display: block;
+    padding: 10px 15px;
+    text-decoration: none;
+    margin-bottom: 4px;
+    border-radius: 4px;
+    font-weight: 500;
+  }
+  .sidebar-nav a.active,
+  .sidebar-nav a:hover {
+    background-color: #ffcc00;
+    color: #2d3e50;
+  }
+  .main-area {
+    position: relative;
+    padding: 20px;
+    margin-left: 240px; /* Sidebar width */
+    min-height: 100vh;
+    background: #fff;
+    width: 100%;
+    box-sizing: border-box;
+  }
   /* Grid & Cards */
 #academicYearsGrid {
   display: grid;
@@ -192,22 +241,7 @@
     </div>
   </div>
 
-  <script>
-    // User dropdown toggle logic
-    const userIconBtn = document.getElementById('userIconBtn');
-    const userDropdown = document.getElementById('userDropdown');
-    userIconBtn.addEventListener('click', (e) => {
-      e.stopPropagation();
-      userDropdown.classList.toggle('show');
-      userDropdown.setAttribute('aria-hidden', userDropdown.classList.contains('show') ? 'false' : 'true');
-    });
-    document.addEventListener('click', () => {
-      if (userDropdown.classList.contains('show')) {
-        userDropdown.classList.remove('show');
-        userDropdown.setAttribute('aria-hidden', 'true');
-      }
-    });
-  </script>
+
 
   <script type="module" src="js/academic-periods.js"></script>
 </body>

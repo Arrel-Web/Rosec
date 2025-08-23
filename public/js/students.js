@@ -1,5 +1,7 @@
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js';
-import { getFirestore, collection, getDocs } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js';
+import { 
+  getFirestore, collection, getDocs, query, where, doc, setDoc, updateDoc 
+} from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js';
 
 // Firebase config
 const firebaseConfig = {
@@ -19,7 +21,7 @@ const db = getFirestore(app);
 const studentsTableBody = document.querySelector('#studentsTable tbody');
 
 async function loadStudents() {
-  studentsTableBody.innerHTML = ''; // clear old rows
+  studentsTableBody.innerHTML = '';
 
   try {
     const studentsSnapshot = await getDocs(collection(db, 'students'));
@@ -29,15 +31,13 @@ async function loadStudents() {
       return;
     }
 
-    studentsSnapshot.forEach(doc => {
-      const data = doc.data();
+    studentsSnapshot.forEach(docSnap => {
+      const data = docSnap.data();
       const row = document.createElement('tr');
 
-      // Student ID
       const idCell = document.createElement('td');
       idCell.textContent = data.studentId || 'N/A';
 
-      // Student Name
       const nameCell = document.createElement('td');
       nameCell.textContent = data.name || 'Unnamed';
 
@@ -46,13 +46,295 @@ async function loadStudents() {
 
       studentsTableBody.appendChild(row);
     });
-
   } catch (error) {
     console.error('Error loading students:', error);
     studentsTableBody.innerHTML = `<tr><td colspan="2" style="text-align:center; color:red;">Failed to load students.</td></tr>`;
   }
 }
 
+// Helper: upsert by studentId (update if exists, else create)
+async function upsertStudent({ studentId, name }) {
+  const cleanId = (studentId || '').trim();
+  const cleanName = (name || '').trim();
+  if (!cleanId || !cleanName) throw new Error('Missing studentId or name');
+
+  const colRef = collection(db, 'students');
+  const q = query(colRef, where('studentId', '==', cleanId));
+  const snap = await getDocs(q);
+
+  if (!snap.empty) {
+    // Update ALL matches to keep data consistent if duplicates exist
+    await Promise.all(
+      snap.docs.map(d => updateDoc(d.ref, { studentId: cleanId, name: cleanName }))
+    );
+  } else {
+    // Create a new doc (use studentId as doc ID to converge on stable IDs)
+    await setDoc(doc(db, 'students', cleanId), { studentId: cleanId, name: cleanName });
+  }
+}
+
+// ------- Modal scaffolding (creates if missing) -------
+let modalOverlay = document.getElementById('modalOverlay');
+let modalContent = document.getElementById('modalContent');
+let closeModalBtn = document.getElementById('closeModal');
+
+if (!modalOverlay || !modalContent || !closeModalBtn) {
+  modalOverlay = document.createElement('div');
+  modalOverlay.id = 'modalOverlay';
+  modalOverlay.style.position = 'fixed';
+  modalOverlay.style.inset = '0';
+  modalOverlay.style.background = 'rgba(0,0,0,0.5)';
+  modalOverlay.style.display = 'flex';
+  modalOverlay.style.alignItems = 'center';
+  modalOverlay.style.justifyContent = 'center';
+  modalOverlay.style.zIndex = '1000';
+  modalOverlay.classList = 'hidden';
+
+  const modalBox = document.createElement('div');
+  modalBox.style.background = 'white';
+  modalBox.style.borderRadius = '8px';
+  modalBox.style.padding = '16px';
+  modalBox.style.minWidth = '320px';
+  modalBox.style.maxWidth = '90%';
+  modalBox.style.position = 'relative';
+
+  closeModalBtn = document.createElement('button');
+  closeModalBtn.id = 'closeModal';
+  closeModalBtn.textContent = '✕';
+  closeModalBtn.style.position = 'absolute';
+  closeModalBtn.style.top = '8px';
+  closeModalBtn.style.right = '8px';
+
+  modalContent = document.createElement('div');
+  modalContent.id = 'modalContent';
+
+  modalBox.appendChild(closeModalBtn);
+  modalBox.appendChild(modalContent);
+  modalOverlay.appendChild(modalBox);
+  document.body.appendChild(modalOverlay);
+}
+
+function closeModal() {
+  modalOverlay.classList.add('hidden');
+  modalContent.innerHTML = '';
+}
+closeModalBtn.addEventListener('click', closeModal);
+modalOverlay.addEventListener('click', e => {
+  if (e.target === modalOverlay) closeModal();
+});
+
+// ================= FORMS =================
+function showAddStudentForm() {
+  renderSingleStudentForm();
+  modalOverlay.classList.remove('hidden');
+}
+
+// ---- SINGLE STUDENT FORM ----
+function renderSingleStudentForm() {
+  modalContent.innerHTML = `
+    <div style="display:flex; gap:8px; margin-bottom:15px;">
+      <button id="switchToBulkBtn">Add Multiple Students</button>
+      <button id="switchToCsvBtn">Upload CSV</button>
+    </div>
+    <form id="addStudentForm" style="display: flex; flex-direction: column; gap: 10px;">
+      <label for="studentId">Student ID</label>
+      <input type="text" id="studentId" name="studentId" required />
+      <label for="name">Student Name</label>
+      <input type="text" id="name" name="name" required />
+      <button type="submit" style="align-self: flex-start;">Add / Update Student</button>
+    </form>
+    <div id="formMessage" style="margin-top:10px;color:red;"></div>
+  `;
+  document.getElementById('switchToBulkBtn').addEventListener('click', renderBulkStudentForm);
+  document.getElementById('switchToCsvBtn').addEventListener('click', renderCsvUploadForm);
+
+  const form = document.getElementById('addStudentForm');
+  const formMessage = document.getElementById('formMessage');
+
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const studentId = form.studentId.value.trim();
+    const name = form.name.value.trim();
+    if (!studentId || !name) {
+      formMessage.textContent = 'Please fill in all fields.';
+      return;
+    }
+    formMessage.style.color = 'black';
+    formMessage.textContent = 'Saving...';
+    try {
+      await upsertStudent({ studentId, name });
+      formMessage.style.color = 'green';
+      formMessage.textContent = 'Saved!';
+      form.reset();
+      loadStudents();
+      setTimeout(closeModal, 1000);
+    } catch (error) {
+      console.error('Error saving student:', error);
+      formMessage.style.color = 'red';
+      formMessage.textContent = 'Failed to save student. Please try again.';
+    }
+  });
+}
+
+// ---- BULK STUDENT FORM ----
+function renderBulkStudentForm() {
+  modalContent.innerHTML = `
+    <div style="display:flex; gap:8px; margin-bottom:15px;">
+      <button id="switchToSingleBtn">Add Single Student</button>
+      <button id="switchToCsvBtn">Upload CSV</button>
+    </div>
+    <table id="bulkStudentTable" border="1" style="width: 100%; border-collapse: collapse;">
+      <thead>
+        <tr>
+          <th>Student ID</th>
+          <th>Student Name</th>
+          <th>Remove</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><input type="text" class="studentIdInput" required></td>
+          <td><input type="text" class="nameInput" required></td>
+          <td><button type="button" class="removeRowBtn">✕</button></td>
+        </tr>
+      </tbody>
+    </table>
+    <button id="addRowBtn" type="button" style="margin-top:10px;">Add Row</button>
+    <br />
+    <button id="saveAllBtn" type="button" style="margin-top:10px;">Save All</button>
+    <div id="bulkFormMessage" style="margin-top:10px;color:red;"></div>
+  `;
+  document.getElementById('switchToSingleBtn').addEventListener('click', renderSingleStudentForm);
+  document.getElementById('switchToCsvBtn').addEventListener('click', renderCsvUploadForm);
+
+  const addRowBtn = document.getElementById('addRowBtn');
+  const tbody = modalContent.querySelector('#bulkStudentTable tbody');
+  const bulkFormMessage = document.getElementById('bulkFormMessage');
+
+  function attachRemoveHandlers() {
+    const removeBtns = modalContent.querySelectorAll('.removeRowBtn');
+    removeBtns.forEach(btn => {
+      btn.onclick = () => {
+        if (tbody.rows.length > 1) btn.closest('tr').remove();
+        else alert('At least one row is required.');
+      };
+    });
+  }
+  attachRemoveHandlers();
+
+  addRowBtn.addEventListener('click', () => {
+    const newRow = document.createElement('tr');
+    newRow.innerHTML = `
+      <td><input type="text" class="studentIdInput" required></td>
+      <td><input type="text" class="nameInput" required></td>
+      <td><button type="button" class="removeRowBtn">✕</button></td>
+    `;
+    tbody.appendChild(newRow);
+    attachRemoveHandlers();
+  });
+
+  document.getElementById('saveAllBtn').addEventListener('click', async () => {
+    bulkFormMessage.style.color = 'black';
+    bulkFormMessage.textContent = 'Saving students...';
+    const studentIdInputs = modalContent.querySelectorAll('.studentIdInput');
+    const nameInputs = modalContent.querySelectorAll('.nameInput');
+
+    const studentsToSave = [];
+    for (let i = 0; i < studentIdInputs.length; i++) {
+      const idVal = studentIdInputs[i].value.trim();
+      const nameVal = nameInputs[i].value.trim();
+      if (!idVal || !nameVal) {
+        bulkFormMessage.style.color = 'red';
+        bulkFormMessage.textContent = `Please fill all fields in row ${i + 1}.`;
+        return;
+      }
+      studentsToSave.push({ studentId: idVal, name: nameVal });
+    }
+
+    try {
+      for (const student of studentsToSave) {
+        await upsertStudent(student);
+      }
+      bulkFormMessage.style.color = 'green';
+      bulkFormMessage.textContent = `Saved ${studentsToSave.length} students!`;
+      loadStudents();
+      setTimeout(closeModal, 1200);
+    } catch (error) {
+      console.error('Error saving students:', error);
+      bulkFormMessage.style.color = 'red';
+      bulkFormMessage.textContent = 'Failed to save students. Please try again.';
+    }
+  });
+}
+
+// ---- CSV UPLOAD FORM ----
+function renderCsvUploadForm() {
+  modalContent.innerHTML = `
+    <div style="display:flex; gap:8px; margin-bottom:15px;">
+      <button id="switchToSingleBtn">Add Single Student</button>
+      <button id="switchToBulkBtn">Add Multiple Students</button>
+    </div>
+    <h3>Upload Students via CSV</h3>
+    <input type="file" id="csvFileInput" accept=".csv" />
+    <button id="uploadCsvBtn" style="margin-top:10px;">Upload</button>
+    <div id="csvMessage" style="margin-top:10px;color:red;"></div>
+    <p style="margin-top:10px; font-size:0.9em; color:#555;">
+      CSV headers: <code>studentId,name</code><br>
+      Example rows:<br>
+      <code>S001,Juan Dela Cruz</code><br>
+      <code>S002,Maria Santos</code>
+    </p>
+  `;
+
+  document.getElementById('switchToSingleBtn').addEventListener('click', renderSingleStudentForm);
+  document.getElementById('switchToBulkBtn').addEventListener('click', renderBulkStudentForm);
+
+  document.getElementById('uploadCsvBtn').addEventListener('click', () => {
+    const fileInput = document.getElementById('csvFileInput');
+    const file = fileInput.files[0];
+    const csvMessage = document.getElementById('csvMessage');
+
+    if (!file) {
+      csvMessage.textContent = "Please select a CSV file first.";
+      return;
+    }
+
+    Papa.parse(file, {
+      header: true,
+      skipEmptyLines: true,
+      complete: async function(results) {
+        csvMessage.style.color = "black";
+        csvMessage.textContent = "Uploading...";
+        let success = 0, failed = 0;
+
+        for (let row of results.data) {
+          try {
+            const studentId = (row.studentId || '').trim();
+            const name = (row.name || '').trim();
+            if (!studentId || !name) {
+              failed++;
+              continue;
+            }
+            await upsertStudent({ studentId, name });
+            success++;
+          } catch (err) {
+            console.error('Row error:', err);
+            failed++;
+          }
+        }
+
+        csvMessage.style.color = failed ? "orange" : "green";
+        csvMessage.textContent = `Done. Saved: ${success}${failed ? `, Skipped/Failed: ${failed}` : ''}.`;
+        loadStudents();
+        setTimeout(closeModal, 1500);
+      }
+    });
+  });
+}
+
+// Wire button
+const openAddStudentBtn = document.getElementById('openAddStudentBtn');
+if (openAddStudentBtn) openAddStudentBtn.addEventListener('click', showAddStudentForm);
+
 // Load students on page load
 loadStudents();
-  

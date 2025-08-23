@@ -6,7 +6,9 @@ import {
   getAuth, onAuthStateChanged, signOut 
 } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js';
 
+// =====================
 // Firebase Config
+// =====================
 const firebaseConfig = {
   apiKey: "AIzaSyAznHzrOLmLvI98_0P649Tx5TZEwXaNNBs",
   authDomain: "rosec-57d1d.firebaseapp.com",
@@ -21,13 +23,17 @@ const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 const auth = getAuth(app);
 
+// =====================
 // DOM Elements
+// =====================
 const suggestedList = document.getElementById('suggestedList') || document.getElementById('classesContainer');
 const suggestedCount = document.getElementById('suggested-count');
 const subjectsGrid = document.getElementById('subjectsGrid');
+
 const userNameEl = document.getElementById('user-name');
 const userEmailEl = document.getElementById('user-email');
 const userRoleEl = document.getElementById('user-role');
+
 const userIconBtn = document.getElementById('userIconBtn');
 const userDropdown = document.getElementById('userDropdown');
 
@@ -49,33 +55,45 @@ const classIdInput = document.getElementById('classIdInput');
 
 // Academic Year form inputs
 const academicYearSelect = document.getElementById('academicYearSelect');
+// These two fields aren't in your HTML (that's fine—guards below keep it safe)
 const newAcademicYearIdInput = document.getElementById('newAcademicYearId');
 const newAcademicYearNameInput = document.getElementById('newAcademicYearName');
 
-// User dropdown toggle
-userIconBtn.addEventListener('click', (e) => {
-  e.stopPropagation();
-  userDropdown.classList.toggle('show');
-});
-document.addEventListener('click', () => userDropdown.classList.remove('show'));
-
-// Logout
-document.getElementById('signOutBtn').addEventListener('click', () => {
-  signOut(auth).then(() => {
-    window.location.href = 'index.html';
-  }).catch(error => {
-    console.error('Log out error:', error);
-    alert('Failed to log out. Please try again.');
+// =====================
+// User dropdown toggle (guarded; note HTML already has a similar script)
+// =====================
+if (userIconBtn && userDropdown) {
+  userIconBtn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    userDropdown.classList.toggle('show');
   });
-});
+  document.addEventListener('click', () => userDropdown.classList.remove('show'));
+}
 
-// Fetch teacher name by email
+// =====================
+// Logout
+// =====================
+const signOutBtn = document.getElementById('signOutBtn');
+if (signOutBtn) {
+  signOutBtn.addEventListener('click', () => {
+    signOut(auth)
+      .then(() => { window.location.href = 'index.html'; })
+      .catch(error => {
+        console.error('Log out error:', error);
+        alert('Failed to log out. Please try again.');
+      });
+  });
+}
+
+// =====================
+// Helpers
+// =====================
 async function getTeacherNameByEmail(email) {
   if (!email) return 'No teacher assigned';
   try {
     const teachersCol = collection(db, 'teachers');
-    const q = query(teachersCol, where('email', '==', email));
-    const snap = await getDocs(q);
+    const qy = query(teachersCol, where('email', '==', email));
+    const snap = await getDocs(qy);
     if (snap.empty) return email;
     return snap.docs[0].data().name || email;
   } catch (err) {
@@ -84,15 +102,14 @@ async function getTeacherNameByEmail(email) {
   }
 }
 
-// Load teachers dropdown
 export async function loadTeachersIntoDropdown() {
   if (!teacherEmailInput) return;
   teacherEmailInput.innerHTML = `<option value="">Select Teacher</option>`;
   try {
     const teachersCol = collection(db, 'teachers');
     const teachersSnap = await getDocs(teachersCol);
-    teachersSnap.forEach(doc => {
-      const t = doc.data();
+    teachersSnap.forEach(d => {
+      const t = d.data();
       const option = document.createElement('option');
       option.value = t.email;
       option.textContent = t.name || t.email;
@@ -103,12 +120,12 @@ export async function loadTeachersIntoDropdown() {
   }
 }
 
-// Load academic years dropdown
 export async function loadAcademicYearsIntoDropdown(selectedValue = '') {
   if (!academicYearSelect) return;
   academicYearSelect.innerHTML = `<option value="">Select Academic Year</option>`;
   try {
-    const acadCol = collection(db, 'academicyear'); // make sure this matches your collection name
+    // Unified to 'academicYears' to match your create-class logic below
+    const acadCol = collection(db, 'academicYears');
     const acadSnap = await getDocs(acadCol);
 
     if (acadSnap.empty) {
@@ -119,8 +136,8 @@ export async function loadAcademicYearsIntoDropdown(selectedValue = '') {
       return;
     }
 
-    acadSnap.forEach(doc => {
-      const value = doc.id; // use the document ID as academic ID
+    acadSnap.forEach(d => {
+      const value = d.id; // use the document ID as academic ID
       const option = document.createElement('option');
       option.value = value;
       option.textContent = value; // show only the academic ID
@@ -133,7 +150,6 @@ export async function loadAcademicYearsIntoDropdown(selectedValue = '') {
   }
 }
 
-// Create subject card
 async function createSubjectCard(subject, classId) {
   const teacherName = await getTeacherNameByEmail(subject.assignedTeacherEmail);
   const link = document.createElement('a');
@@ -151,12 +167,11 @@ async function createSubjectCard(subject, classId) {
   return link;
 }
 
-// Get user role
 async function getUserRole(email) {
   try {
     const usersCol = collection(db, 'users');
-    const q = query(usersCol, where('email', '==', email));
-    const snap = await getDocs(q);
+    const qy = query(usersCol, where('email', '==', email));
+    const snap = await getDocs(qy);
     if (snap.empty) return null;
     return snap.docs[0].data().role || null;
   } catch (err) {
@@ -165,7 +180,6 @@ async function getUserRole(email) {
   }
 }
 
-// Load subjects for a class
 async function loadSubjectsForClass(classId) {
   if (!subjectsGrid) return;
   subjectsGrid.innerHTML = '';
@@ -182,9 +196,9 @@ async function loadSubjectsForClass(classId) {
     }
 
     const subjectIds = [];
-    classesSnap.forEach(doc => {
-      const data = doc.data();
-      if (data.subjectId) subjectIds.push(data.subjectId.toLowerCase());
+    classesSnap.forEach(d => {
+      const data = d.data();
+      if (data.subjectId) subjectIds.push(String(data.subjectId).toLowerCase());
     });
 
     if (subjectIds.length === 0) {
@@ -193,10 +207,10 @@ async function loadSubjectsForClass(classId) {
     }
 
     const allSubjectsSnap = await getDocs(collection(db, 'subjects'));
-    let matchedSubjects = [];
-    allSubjectsSnap.forEach(doc => {
-      const subjectData = doc.data();
-      if (subjectIds.includes((subjectData.subjectId || '').toLowerCase())) {
+    const matchedSubjects = [];
+    allSubjectsSnap.forEach(d => {
+      const subjectData = d.data();
+      if (subjectIds.includes(String(subjectData.subjectId || '').toLowerCase())) {
         matchedSubjects.push(subjectData);
       }
     });
@@ -216,11 +230,11 @@ async function loadSubjectsForClass(classId) {
   }
 }
 
-// Load classes
 async function loadClasses(userEmail, role) {
   if (!suggestedList) return;
   suggestedList.innerHTML = '';
   if (suggestedCount) suggestedCount.textContent = '';
+
   if (!role) {
     suggestedList.innerHTML = `<p class="muted">Role not found.</p>`;
     if (userRoleEl) userRoleEl.textContent = 'Role: N/A';
@@ -246,9 +260,9 @@ async function loadClasses(userEmail, role) {
     }
 
     const uniqueClasses = new Map();
-    classesSnapshot.forEach(doc => {
-      const data = doc.data();
-      const cId = data.classId || doc.id;
+    classesSnapshot.forEach(d => {
+      const data = d.data();
+      const cId = data.classId || d.id;
       if (!uniqueClasses.has(cId)) uniqueClasses.set(cId, data);
     });
 
@@ -271,20 +285,22 @@ async function loadClasses(userEmail, role) {
       suggestedList.appendChild(div);
     });
 
-    if (suggestedCount) suggestedCount.textContent = uniqueClasses.size;
+    if (suggestedCount) suggestedCount.textContent = String(uniqueClasses.size);
   } catch (err) {
     console.error('Error loading classes:', err);
     suggestedList.innerHTML = `<p class="muted">Error loading classes.</p>`;
   }
 }
 
+// =====================
 // Add subject form submission
+// =====================
 if (addSubjectForm) {
   addSubjectForm.addEventListener('submit', async (e) => {
     e.preventDefault();
-    const subjectId = subjectIdInput.value.trim();
-    const subjectName = subjectNameInput.value.trim();
-    const classId = selectedClassIdInput.value;
+    const subjectId = subjectIdInput ? subjectIdInput.value.trim() : '';
+    const subjectName = subjectNameInput ? subjectNameInput.value.trim() : '';
+    const classId = selectedClassIdInput ? selectedClassIdInput.value : '';
     const selectedTeacherEmail = teacherEmailInput ? teacherEmailInput.value : '';
     const newTeacherName = newTeacherNameInput ? newTeacherNameInput.value.trim() : '';
     const newTeacherEmail = newTeacherEmailInput ? newTeacherEmailInput.value.trim() : '';
@@ -299,6 +315,7 @@ if (addSubjectForm) {
     }
 
     try {
+      // 1) Resolve teacher
       let teacherEmailToAssign = '';
       if (selectedTeacherEmail) {
         teacherEmailToAssign = selectedTeacherEmail;
@@ -312,6 +329,7 @@ if (addSubjectForm) {
         teacherEmailToAssign = newTeacherEmail;
       }
 
+      // 2) Upsert subject
       const subjectDocRef = doc(db, 'subjects', subjectId);
       const subjectDocSnap = await getDoc(subjectDocRef);
       if (!subjectDocSnap.exists()) {
@@ -320,6 +338,7 @@ if (addSubjectForm) {
         await setDoc(subjectDocRef, { assignedTeacherEmail: teacherEmailToAssign, name: subjectName }, { merge: true });
       }
 
+      // 3) Find academicId of the class (if any)
       let classAcademicId = '';
       const classQuery = query(collection(db, 'classes'), where('classId', '==', classId));
       const classSnap = await getDocs(classQuery);
@@ -327,7 +346,12 @@ if (addSubjectForm) {
         classAcademicId = classSnap.docs[0].data().academicId || '';
       }
 
-      const duplicateQuery = query(collection(db, 'classes'), where('classId', '==', classId), where('subjectId', '==', subjectId));
+      // 4) Avoid duplicate class+subject pair, else add
+      const duplicateQuery = query(
+        collection(db, 'classes'),
+        where('classId', '==', classId),
+        where('subjectId', '==', subjectId)
+      );
       const duplicateSnap = await getDocs(duplicateQuery);
       if (duplicateSnap.empty) {
         await addDoc(collection(db, 'classes'), { 
@@ -348,11 +372,13 @@ if (addSubjectForm) {
   });
 }
 
+// =====================
 // Create Class form submission
+// =====================
 if (createClassForm) {
   createClassForm.addEventListener('submit', async (e) => {
     e.preventDefault();
-    const classId = classIdInput.value.trim();
+    const classId = classIdInput ? classIdInput.value.trim() : '';
     const selectedAcademicId = academicYearSelect ? academicYearSelect.value : '';
     const newAcademicYearId = newAcademicYearIdInput ? newAcademicYearIdInput.value.trim() : '';
     const newAcademicYearName = newAcademicYearNameInput ? newAcademicYearNameInput.value.trim() : '';
@@ -371,6 +397,7 @@ if (createClassForm) {
       if (selectedAcademicId) {
         academicIdToAssign = selectedAcademicId;
       } else {
+        // Create new academic year doc if using the (optional) creation inputs
         const acadDocRef = doc(db, 'academicYears', newAcademicYearId);
         const acadDocSnap = await getDoc(acadDocRef);
         if (!acadDocSnap.exists()) {
@@ -383,9 +410,10 @@ if (createClassForm) {
         academicIdToAssign = newAcademicYearId;
       }
 
+      // Prevent duplicate classId
       const classesCol = collection(db, 'classes');
-      const q = query(classesCol, where('classId', '==', classId));
-      const snap = await getDocs(q);
+      const qy = query(classesCol, where('classId', '==', classId));
+      const snap = await getDocs(qy);
       if (!snap.empty) {
         alert(`Class with ID "${classId}" already exists.`);
         return;
@@ -395,7 +423,7 @@ if (createClassForm) {
       alert(`Class ${classId} created successfully!`);
       createClassForm.reset();
 
-      // Reload academic years dropdown and auto-select the newly created
+      // Reload academic years dropdown and auto-select the chosen/new one
       await loadAcademicYearsIntoDropdown(academicIdToAssign);
 
       const user = auth.currentUser;
@@ -410,23 +438,34 @@ if (createClassForm) {
   });
 }
 
+// =====================
 // Auth state
+// =====================
 onAuthStateChanged(auth, async (user) => {
-  if (user) {
-    userNameEl.textContent = user.displayName || 'User';
-    userEmailEl.textContent = user.email;
-    const role = await getUserRole(user.email);
-    await loadClasses(user.email, role);
-    if (addSubjectFormSection) addSubjectFormSection.style.display = 'none';
-    if (subjectsGrid) subjectsGrid.innerHTML = `<p class="muted">Select a class to view its subjects.</p>`;
-    await loadTeachersIntoDropdown();
-    await loadAcademicYearsIntoDropdown();
-  } else {
-    userNameEl.textContent = 'User Name';
-    userEmailEl.textContent = 'user@example.com';
-    userRoleEl.textContent = 'Role: N/A';
-    if (suggestedList) suggestedList.innerHTML = `<p class="muted">Please sign in to see your classes.</p>`;
-    if (subjectsGrid) subjectsGrid.innerHTML = '';
-    if (addSubjectFormSection) addSubjectFormSection.style.display = 'none';
+  try {
+    if (user) {
+      if (userNameEl) userNameEl.textContent = user.displayName || 'User';
+      if (userEmailEl) userEmailEl.textContent = user.email;
+
+      const role = await getUserRole(user.email);
+      if (userRoleEl) userRoleEl.textContent = `Role: ${role ?? 'N/A'}`;
+
+      await loadClasses(user.email, role);
+
+      if (addSubjectFormSection) addSubjectFormSection.style.display = 'none';
+      if (subjectsGrid) subjectsGrid.innerHTML = `<p class="muted">Select a class to view its subjects.</p>`;
+
+      await loadTeachersIntoDropdown();
+      await loadAcademicYearsIntoDropdown();
+    } else {
+      if (userNameEl) userNameEl.textContent = 'User Name';
+      if (userEmailEl) userEmailEl.textContent = 'user@example.com';
+      if (userRoleEl) userRoleEl.textContent = 'Role: N/A';
+      if (suggestedList) suggestedList.innerHTML = `<p class="muted">Please sign in to see your classes.</p>`;
+      if (subjectsGrid) subjectsGrid.innerHTML = '';
+      if (addSubjectFormSection) addSubjectFormSection.style.display = 'none';
+    }
+  } catch (err) {
+    console.error('Auth state update error:', err);
   }
 });
