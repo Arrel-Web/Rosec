@@ -76,6 +76,56 @@
     tbody tr:hover {
       background-color: #eef4ff;
     }
+    /* New: header and modal styles */
+    .header-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 10px;
+    }
+    .primary-btn {
+      background: #ffcc00;
+      color: #2d3e50;
+      border: none;
+      padding: 8px 12px;
+      border-radius: 4px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+    .primary-btn:hover {
+      filter: brightness(0.95);
+    }
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.5);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+    }
+    .modal {
+      background: #fff;
+      width: min(600px, 90vw);
+      max-height: 90vh;
+      overflow: auto;
+      border-radius: 8px;
+      padding: 16px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+    }
+    .modal-header {
+      display: flex;
+      justify-content: flex-end;
+    }
+    .modal-header button {
+      background: none;
+      border: none;
+      font-size: 1.5rem;
+      cursor: pointer;
+      color: #555;
+    }
+    .hidden { display: none; }
   </style>
 </head>
 <body>
@@ -98,7 +148,10 @@
     </aside>
 
     <main class="main-area">
-      <h1>Teachers List</h1>
+      <div class="header-row">
+        <h1>Teachers List</h1>
+        <button id="addTeacherBtn" class="primary-btn"><i class="fa-solid fa-plus"></i> Add Teacher</button>
+      </div>
 
       <table id="teachersTable" aria-live="polite" aria-label="List of teachers">
         <thead>
@@ -111,6 +164,15 @@
           <tr><td colspan="2" style="text-align:center; color:#666;">Loading teachers...</td></tr>
         </tbody>
       </table>
+
+      <div id="modalOverlay" class="modal-overlay hidden" aria-hidden="true">
+        <div class="modal" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+          <div class="modal-header">
+            <button id="closeModal" aria-label="Close">&times;</button>
+          </div>
+          <div id="modalContent"></div>
+        </div>
+      </div>
     </main>
   </div>
 
