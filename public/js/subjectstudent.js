@@ -2,7 +2,7 @@ import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.8.0/firebas
 import {
   getFirestore, collection, getDocs, query, where, doc, getDoc, addDoc, setDoc
 } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js';
-import { getAuth, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js';
+import { getAuth, onAuthStateChanged, signOut } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js';
 
 // --- 1) Firebase config ---
 const firebaseConfig = {
@@ -30,11 +30,57 @@ const qs = new URLSearchParams(location.search);
   if (qs.get(k)) $(k).value = qs.get(k);
 });
 
-// Show auth status
-onAuthStateChanged(auth, (user) => {
+// DOM Elements for user dropdown
+const userNameEl = document.getElementById('user-name');
+const userEmailEl = document.getElementById('user-email');
+const userRoleEl = document.getElementById('user-role');
+const userIconBtn = document.getElementById('userIconBtn');
+const userDropdown = document.getElementById('userDropdown');
+
+// User dropdown toggle - with null checks
+if (userIconBtn && userDropdown) {
+  userIconBtn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    userDropdown.classList.toggle('show');
+  });
+  document.addEventListener('click', () => userDropdown.classList.remove('show'));
+}
+
+// Logout - with null check
+const signOutBtn = document.getElementById('signOutBtn');
+if (signOutBtn) {
+  signOutBtn.addEventListener('click', () => {
+    signOut(auth).then(() => {
+      window.location.href = 'index.html';
+    }).catch(error => {
+      console.error('Log out error:', error);
+      alert('Failed to log out. Please try again.');
+    });
+  });
+}
+
+// Auth state - with null checks
+onAuthStateChanged(auth, async (user) => {
   const el = $('authStatus');
-  if (user) { el.textContent = `Signed in: ${user.email || 'user'}`; el.classList.add('ok','badge'); }
-  else { el.textContent = 'Not signed in'; el.classList.add('warn'); }
+  if (user) {
+    if (el) {
+      el.textContent = 'Authenticated'; 
+      el.classList.add('ok','badge');
+    }
+    
+    if (userNameEl) userNameEl.textContent = user.displayName || 'User Name:';
+    if (userEmailEl) userEmailEl.textContent = user.email;
+    if (userRoleEl) userRoleEl.textContent = 'Role: Teacher';
+  } else {
+    if (el) {
+      el.textContent = 'Not signed in'; 
+      el.classList.add('warn');
+    }
+    
+    if (userNameEl) userNameEl.textContent = 'User Name';
+    if (userEmailEl) userEmailEl.textContent = 'user@example.com';
+    if (userRoleEl) userRoleEl.textContent = 'Role: N/A';
+  }
 });
 
 // --- 3) Data loaders ---

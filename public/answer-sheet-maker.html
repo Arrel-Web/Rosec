@@ -8,54 +8,91 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
   <style>
     .layout {
-    display: flex;
-  }
-  .sidebar {
-    width: 240px;
-    background: #2d3e50;
-    color: white;
-    min-height: 100vh;
-    padding: 20px 10px;
-    box-sizing: border-box;
-    position: fixed;
-    left: 0;
-    top: 0;
-  }
-  .sidebar-header {
-    font-size: 1.5rem;
-    font-weight: bold;
-    margin-bottom: 1rem;
-    display: flex;
-    align-items: center;
-    gap: 10px;
-  }
-  .sidebar-header .logo {
-    font-size: 1.8rem;
-    color: #ffcc00;
-  }
-  .sidebar-nav a {
-    color: #ddd;
-    display: block;
-    padding: 10px 15px;
-    text-decoration: none;
-    margin-bottom: 4px;
-    border-radius: 4px;
-    font-weight: 500;
-  }
-  .sidebar-nav a.active,
-  .sidebar-nav a:hover {
-    background-color: #ffcc00;
-    color: #2d3e50;
-  }
-  .main-area {
-    position: relative;
-    padding: 20px;
-    margin-left: 240px; /* Sidebar width */
-    min-height: 100vh;
-    background: #fff;
-    width: 100%;
-    box-sizing: border-box;
-  }
+      display: flex;
+    }
+    .sidebar {
+      width: 240px;
+      background: #2d3e50;
+      color: white;
+      min-height: 100vh;
+      padding: 20px 10px;
+      box-sizing: border-box;
+      position: fixed;
+      left: 0;
+      top: 0;
+    }
+    .sidebar-header {
+      font-size: 1.5rem;
+      font-weight: bold;
+      margin-bottom: 1rem;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .sidebar-header .logo {
+      font-size: 1.8rem;
+      color: #ffcc00;
+    }
+    .sidebar-nav a {
+      color: #ddd;
+      display: block;
+      padding: 10px 15px;
+      text-decoration: none;
+      margin-bottom: 4px;
+      border-radius: 4px;
+      font-weight: 500;
+    }
+    .sidebar-nav a.active,
+    .sidebar-nav a:hover {
+      background-color: #ffcc00;
+      color: #2d3e50;
+    }
+    .main-area {
+      position: relative;
+      padding: 20px;
+      margin-left: 240px; /* Sidebar width */
+      min-height: 100vh;
+      background: #fff;
+      width: 100%;
+      box-sizing: border-box;
+    }
+    
+    /* Topbar Navigation Icons */
+    .topbar-nav-icons {
+      display: flex;
+      align-items: center;
+      gap: 15px;
+      margin-right: 15px;
+    }
+    
+    .topbar-nav-btn {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 40px;
+      height: 40px;
+      background: #6c757d;
+      color: white;
+      text-decoration: none;
+      border-radius: 50%;
+      font-size: 16px;
+      transition: all 0.2s ease;
+      border: none;
+      cursor: pointer;
+    }
+    
+    .topbar-nav-btn:hover {
+      background: #5a6268;
+      color: white;
+      transform: translateY(-1px);
+      box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+    }
+    
+    .top-actions {
+      display: flex;
+      align-items: center;
+    }
+    
     .sheet-container {
       background: white;
       padding: 20px;
@@ -292,30 +329,6 @@
       font-weight: bold;
     }
     
-    .nav-buttons {
-      display: flex;
-      gap: 10px;
-      margin-bottom: 20px;
-    }
-    
-    .nav-btn {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      padding: 10px 16px;
-      background: #6c757d;
-      color: white;
-      text-decoration: none;
-      border-radius: 6px;
-      font-weight: 600;
-      transition: background-color 0.2s ease;
-    }
-    
-    .nav-btn:hover {
-      background: #5a6268;
-      color: white;
-    }
-    
     .btn-group {
       display: flex;
       gap: 10px;
@@ -372,9 +385,90 @@
       color: #dc3545;
       font-weight: bold;
     }
+
+    .topbar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+      padding-bottom: 10px;
+      border-bottom: 1px solid #eee;
+    }
+
+    .brand h3 {
+      margin: 0;
+      font-size: 1.5rem;
+      color: #333;
+    }
+
+    .brand .sub {
+      margin: 0;
+      color: #666;
+      font-size: 0.9rem;
+    }
+
+    .user {
+      position: relative;
+      margin-top: -8px;
+    }
+
+    .user-btn {
+      background: transparent !important;
+      border: 0 !important;
+      padding: 0 !important;
+      cursor: pointer !important;
+      border-radius: 50% !important;
+      width: 56px !important;
+      height: 56px !important;
+      display: flex !important;
+      align-items: center !important;
+      justify-content: center !important;
+    }
+
+    .user-btn img#userAvatar {
+      width: 100% !important;
+      height: 100% !important;
+      border-radius: 50% !important;
+      object-fit: cover !important;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.2) !important;
+      display: block !important;
+    }
+
+    .user-dropdown {
+      display: none;
+      position: absolute;
+      background: white;
+      border: 1px solid #ccc;
+      padding: 12px;
+      right: 0;
+      top: 64px;
+      width: 200px;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+      z-index: 10000 !important;
+      border-radius: 8px;
+    }
+
+    .user-dropdown.show {
+      display: block !important;
+    }
+
+    .user-dropdown .divider {
+      height: 1px;
+      background: #eee;
+      margin: 8px 0;
+    }
+
+    .user-dropdown button {
+      background: #f5f7f9;
+      border: 0;
+      padding: 8px 10px;
+      border-radius: 6px;
+      cursor: pointer;
+      width: 100%;
+    }
     
     @media print {
-      .config-section, .btn-group, .nav-buttons { display: none; }
+      .config-section, .btn-group, .topbar-nav-icons { display: none; }
       .answer-sheet-preview { border: none; margin: 0; padding: 10px; }
       body { margin: 0; }
     }
@@ -396,8 +490,18 @@
       .btn-group {
         flex-direction: column;
       }
+      
+      .topbar-nav-icons {
+        gap: 10px;
+        margin-right: 10px;
+      }
+      
+      .topbar-nav-btn {
+        width: 36px;
+        height: 36px;
+        font-size: 14px;
+      }
     }
-    
   </style>
 </head>
 <body>
@@ -423,10 +527,20 @@
     <div class="main-area">
       <header class="topbar">
         <div class="brand">
-          <h1>Answer Sheet & Key Maker</h1>
+          <h3>Answer Sheet & Key Maker</h3>
           <p class="sub">Create answer sheets and keys with scanner compatibility</p>
         </div>
         <div class="top-actions">
+          <!-- Navigation Icons -->
+          <div class="topbar-nav-icons">
+            <a href="dashboard.html" class="topbar-nav-btn" title="Home">
+              <i class="fa-solid fa-house"></i>
+            </a>
+            <button onclick="history.back()" class="topbar-nav-btn" title="Back">
+              <i class="fa-solid fa-arrow-left"></i>
+            </button>
+          </div>
+          <!-- User Section -->
           <div class="user">
             <button id="userIconBtn" class="user-btn">
               <img id="userAvatar" alt="User avatar" src="https://static.vecteezy.com/system/resources/previews/000/550/731/original/user-icon-vector.jpg">
@@ -443,18 +557,6 @@
       </header>
 
       <main class="main-content">
-        <!-- Navigation Buttons -->
-        <div class="nav-buttons">
-          <a href="dashboard.html" class="nav-btn">
-            <i class="fa-solid fa-home"></i>
-            Home
-          </a>
-          <a href="javascript:history.back()" class="nav-btn">
-            <i class="fa-solid fa-arrow-left"></i>
-            Back
-          </a>
-        </div>
-
         <div class="sheet-container">
           <!-- Configuration Section -->
           <div class="config-section">

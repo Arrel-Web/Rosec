@@ -1,0 +1,617 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Exam Details - Rosec</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: #f8f9fa;
+      color: #333;
+      line-height: 1.6;
+    }
+
+    .header {
+      background: white;
+      padding: 15px 25px;
+      border-bottom: 1px solid #e0e0e0;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+
+    .header-left {
+      display: flex;
+      align-items: center;
+      gap: 15px;
+    }
+
+    .back-btn {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 40px;
+      height: 40px;
+      background: #6c757d;
+      color: white;
+      text-decoration: none;
+      border-radius: 50%;
+      font-size: 16px;
+      transition: all 0.2s ease;
+      border: none;
+      cursor: pointer;
+    }
+
+    .back-btn:hover {
+      background: #5a6268;
+      transform: translateY(-1px);
+      box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+    }
+
+    .header-title h1 {
+      font-size: 24px;
+      color: #333;
+      margin-bottom: 4px;
+    }
+
+    .header-title p {
+      color: #666;
+      font-size: 14px;
+    }
+
+    .user-section {
+      position: relative;
+      display: flex;
+      align-items: center;
+    }
+
+    .user-btn {
+      background: transparent !important;
+      border: 0 !important;
+      padding: 0 !important;
+      cursor: pointer !important;
+      border-radius: 50% !important;
+      width: 56px !important;
+      height: 56px !important;
+      display: flex !important;
+      align-items: center !important;
+      justify-content: center !important;
+    }
+
+    .user-btn img {
+      width: 100% !important;
+      height: 100% !important;
+      border-radius: 50% !important;
+      object-fit: cover !important;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.2) !important;
+      display: block !important;
+      pointer-events: none !important;
+    }
+
+    .user-dropdown {
+      position: absolute;
+      top: 100%;
+      right: 0;
+      background: white;
+      border: 1px solid #e0e0e0;
+      border-radius: 8px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+      padding: 15px;
+      min-width: 250px;
+      z-index: 1000;
+      opacity: 0;
+      visibility: hidden;
+      transform: translateY(-10px);
+      transition: all 0.2s ease;
+    }
+
+    .user-dropdown.show {
+      opacity: 1;
+      visibility: visible;
+      transform: translateY(0);
+    }
+
+    .user-dropdown div {
+      margin-bottom: 8px;
+      font-size: 14px;
+    }
+
+    .divider {
+      height: 1px;
+      background: #e0e0e0;
+      margin: 12px 0;
+    }
+
+    .user-dropdown button {
+      background: #dc3545;
+      color: white;
+      border: none;
+      padding: 8px 16px;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 14px;
+      width: 100%;
+    }
+
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 25px;
+    }
+
+    .exam-card {
+      background: white;
+      border-radius: 12px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+      overflow: hidden;
+      margin-bottom: 25px;
+    }
+
+    .exam-header {
+      background: linear-gradient(135deg, #1a73e8, #4285f4);
+      color: white;
+      padding: 25px;
+      position: relative;
+    }
+
+    .exam-header h1 {
+      font-size: 28px;
+      margin-bottom: 8px;
+    }
+
+    .exam-meta {
+      display: flex;
+      gap: 20px;
+      font-size: 14px;
+      opacity: 0.9;
+    }
+
+    .exam-actions {
+      position: absolute;
+      top: 20px;
+      right: 20px;
+      display: flex;
+      gap: 10px;
+    }
+
+    .btn {
+      padding: 10px 18px;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      font-weight: 600;
+      transition: all 0.2s ease;
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 14px;
+    }
+
+    .btn:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+    }
+
+    .btn-danger {
+      background: #dc3545;
+      color: white;
+    }
+
+    .btn-danger:hover {
+      background: #c82333;
+    }
+
+    .btn-warning {
+      background: #ffc107;
+      color: #212529;
+    }
+
+    .btn-warning:hover {
+      background: #e0a800;
+    }
+
+    .btn-primary {
+      background: #1a73e8;
+      color: white;
+    }
+
+    .btn-primary:hover {
+      background: #1557b0;
+    }
+
+    .btn-success {
+      background: #28a745;
+      color: white;
+    }
+
+    .btn-success:hover {
+      background: #218838;
+    }
+
+    .content-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 25px;
+      padding: 25px;
+    }
+
+    .content-section {
+      background: #f8f9fa;
+      border-radius: 8px;
+      padding: 20px;
+      border: 1px solid #e9ecef;
+    }
+
+    .section-title {
+      font-size: 18px;
+      font-weight: 600;
+      margin-bottom: 15px;
+      color: #333;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .exam-details {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .detail-item {
+      display: flex;
+      justify-content: space-between;
+      padding: 8px 0;
+      border-bottom: 1px solid #e9ecef;
+    }
+
+    .detail-item:last-child {
+      border-bottom: none;
+    }
+
+    .detail-label {
+      font-weight: 600;
+      color: #666;
+    }
+
+    .detail-value {
+      color: #333;
+    }
+
+    .no-answer-key {
+      text-align: center;
+      padding: 40px 20px;
+      color: #666;
+    }
+
+    .no-answer-key i {
+      font-size: 48px;
+      color: #ccc;
+      margin-bottom: 15px;
+    }
+
+    .no-answer-key h3 {
+      margin-bottom: 10px;
+      color: #333;
+    }
+
+    .answer-key-preview {
+      background: white;
+      border-radius: 8px;
+      padding: 20px;
+      border: 1px solid #e9ecef;
+    }
+
+    .key-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
+      gap: 10px;
+      margin-top: 15px;
+    }
+
+    .key-item {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 8px;
+      background: #f8f9fa;
+      border-radius: 6px;
+      border: 1px solid #e9ecef;
+    }
+
+    .key-question {
+      font-weight: 600;
+      font-size: 12px;
+      color: #666;
+      margin-bottom: 5px;
+    }
+
+    .key-answer {
+      font-size: 16px;
+      font-weight: bold;
+      color: #1a73e8;
+    }
+
+    .answer-key-creator {
+      margin-top: 25px;
+      padding: 25px;
+      background: white;
+      border-radius: 12px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+
+    .creator-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+    }
+
+    .creator-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+      gap: 15px;
+      margin-top: 15px;
+    }
+
+    .creator-item {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 12px 8px;
+      border: 1px solid #e9ecef;
+      border-radius: 8px;
+      background: #f9f9f9;
+    }
+
+    .creator-question {
+      font-weight: bold;
+      margin-bottom: 8px;
+      color: #333;
+    }
+
+    .creator-choices {
+      display: flex;
+      gap: 6px;
+      align-items: center;
+    }
+
+    .creator-bubble {
+      width: 20px;
+      height: 20px;
+      border: 2px solid #333;
+      border-radius: 50%;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      position: relative;
+    }
+
+    .creator-bubble:hover {
+      background: #e0e0e0;
+      transform: scale(1.1);
+    }
+
+    .creator-bubble.selected {
+      background: #333;
+    }
+
+    .creator-bubble::after {
+      content: attr(data-choice);
+      position: absolute;
+      bottom: -18px;
+      left: 50%;
+      transform: translateX(-50%);
+      font-size: 10px;
+      font-weight: bold;
+    }
+
+    .loading {
+      text-align: center;
+      padding: 60px 20px;
+      color: #666;
+    }
+
+    .loading i {
+      font-size: 32px;
+      color: #1a73e8;
+      animation: spin 1s linear infinite;
+    }
+
+    @keyframes spin {
+      from { transform: rotate(0deg); }
+      to { transform: rotate(360deg); }
+    }
+
+    .error {
+      text-align: center;
+      padding: 60px 20px;
+      color: #dc3545;
+    }
+
+    .error i {
+      font-size: 48px;
+      margin-bottom: 15px;
+    }
+
+    @media (max-width: 768px) {
+      .content-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .exam-actions {
+        position: static;
+        margin-top: 15px;
+        flex-wrap: wrap;
+      }
+
+      .creator-grid {
+        grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+      }
+    }
+  </style>
+</head>
+<body>
+  <header class="header">
+    <div class="header-left">
+      <div class="header-title">
+        <h1 id="pageTitle">Exam Details</h1>
+        <p>View and manage exam information</p>
+      </div>
+    </div>
+    
+    <div class="user-section">
+      <button onclick="history.back()" style="background: #f8f9fa; color: #5f6368; border: 1px solid #dadce0; padding: 8px 12px; border-radius: 8px; cursor: pointer; margin-right: 8px; font-size: 14px;"><i class="fa-solid fa-arrow-left"></i></button>
+      <button onclick="window.location.href='dashboard.html'" style="background: #f8f9fa; color: #5f6368; border: 1px solid #dadce0; padding: 8px 12px; border-radius: 8px; cursor: pointer; margin-right: 12px; font-size: 14px;"><i class="fa-solid fa-house"></i></button>
+      <div class="user">
+        <button id="userIconBtn" class="user-btn">
+          <img id="userAvatar" alt="User avatar" src="https://static.vecteezy.com/system/resources/previews/000/550/731/original/user-icon-vector.jpg">
+        </button>
+        <div id="userDropdown" class="user-dropdown">
+          <div id="user-name">User Name:</div>
+          <div id="user-email"></div>
+          <div id="user-role" style="font-style: italic; color: #666; margin-top: 4px;">Role: Loading...</div>
+          <div class="divider"></div>
+          <button id="signOutBtn">Log out</button>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <div class="container">
+    <div id="loadingState" class="loading">
+      <i class="fa-solid fa-spinner"></i>
+      <p>Loading exam details...</p>
+    </div>
+
+    <div id="errorState" class="error" style="display: none;">
+      <i class="fa-solid fa-exclamation-triangle"></i>
+      <h3>Error Loading Exam</h3>
+      <p>The exam could not be found or there was an error loading it.</p>
+      <button onclick="history.back()" class="btn btn-primary" style="margin-top: 15px;">
+        <i class="fa-solid fa-arrow-left"></i>
+        Go Back
+      </button>
+    </div>
+
+    <div id="examContent" style="display: none;">
+      <div class="exam-card">
+        <div class="exam-header">
+          <h1 id="examTitle">Exam Title</h1>
+          <div class="exam-meta">
+            <span><i class="fa-solid fa-book"></i> <span id="examSubject">Subject</span></span>
+            <span><i class="fa-solid fa-users"></i> <span id="examClass">Class</span></span>
+            <span><i class="fa-solid fa-calendar"></i> <span id="examDate">Date</span></span>
+          </div>
+          <div class="exam-actions">
+            <button id="deleteExamBtn" class="btn btn-danger">
+              <i class="fa-solid fa-trash"></i>
+              Delete Exam
+            </button>
+          </div>
+        </div>
+
+        <div class="content-grid">
+          <div class="content-section">
+            <h2 class="section-title">
+              <i class="fa-solid fa-info-circle"></i>
+              Exam Information
+            </h2>
+            <div class="exam-details">
+              <div class="detail-item">
+                <span class="detail-label">Total Questions:</span>
+                <span class="detail-value" id="totalQuestions">0</span>
+              </div>
+              <div class="detail-item">
+                <span class="detail-label">Choice Options:</span>
+                <span class="detail-value" id="choiceOptions">4</span>
+              </div>
+              <div class="detail-item">
+                <span class="detail-label">Student ID Length:</span>
+                <span class="detail-value" id="studentIdLength">8</span>
+              </div>
+              <div class="detail-item">
+                <span class="detail-label">Subject ID Length:</span>
+                <span class="detail-value" id="subjectIdLength">0</span>
+              </div>
+              <div class="detail-item">
+                <span class="detail-label">Created By:</span>
+                <span class="detail-value" id="createdBy">N/A</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="content-section">
+            <h2 class="section-title">
+              <i class="fa-solid fa-key"></i>
+              Answer Key
+              <div style="margin-left: auto;">
+                <button id="deleteAnswerKeyBtn" class="btn btn-danger" style="display: none; padding: 6px 12px; font-size: 12px;">
+                  <i class="fa-solid fa-trash"></i>
+                  Delete Key
+                </button>
+              </div>
+            </h2>
+            
+            <div id="noAnswerKey" class="no-answer-key">
+              <i class="fa-solid fa-key"></i>
+              <h3>No Answer Key Available</h3>
+              <p>This exam doesn't have an answer key yet.</p>
+              <button id="addAnswerKeyBtn" class="btn btn-primary" style="margin-top: 15px;">
+                <i class="fa-solid fa-plus"></i>
+                Add Answer Key
+              </button>
+            </div>
+
+            <div id="answerKeyPreview" class="answer-key-preview" style="display: none;">
+              <div class="key-grid" id="answerKeyGrid">
+                <!-- Answer key items will be populated here -->
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Answer Key Creator (Initially Hidden) -->
+      <div id="answerKeyCreator" class="answer-key-creator" style="display: none;">
+        <div class="creator-header">
+          <h2 class="section-title">
+            <i class="fa-solid fa-edit"></i>
+            Create Answer Key
+          </h2>
+          <div style="display: flex; gap: 10px;">
+            <button id="saveAnswerKeyBtn" class="btn btn-success">
+              <i class="fa-solid fa-save"></i>
+              Save Answer Key
+            </button>
+            <button id="clearAnswerKeyBtn" class="btn btn-warning">
+              <i class="fa-solid fa-eraser"></i>
+              Clear All
+            </button>
+            <button id="cancelAnswerKeyBtn" class="btn btn-danger">
+              <i class="fa-solid fa-times"></i>
+              Cancel
+            </button>
+          </div>
+        </div>
+        <p style="margin-bottom: 15px; color: #666;">Click the bubbles to select the correct answer for each question:</p>
+        <div id="answerKeyCreatorGrid" class="creator-grid">
+          <!-- Answer key creation items will be populated here -->
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script type="module" src="js/exam-details-simple.js"></script>
+
+</body>
+</html>

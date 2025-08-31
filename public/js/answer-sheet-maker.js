@@ -60,17 +60,22 @@ if (userIconBtn) {
 // Auth listener
 onAuthStateChanged(auth, async (user) => {
   if (user) {
-    if (userNameEl) userNameEl.textContent = user.displayName || 'User';
+    if (userNameEl) userNameEl.textContent = user.displayName || 'User Name:';
     if (userEmailEl) userEmailEl.textContent = user.email;
+    
+    // Update user avatar
+    const userAvatar = document.getElementById('userAvatar');
+    if (userAvatar && user.photoURL) {
+      userAvatar.src = user.photoURL;
+    }
+    
     const role = await getUserRole(user.email);
     if (userRoleEl) userRoleEl.textContent = `Role: ${role || 'N/A'}`;
     
     loadSubjects();
     loadClasses();
   } else {
-    // If not authenticated, load demo data
-    loadDemoSubjects();
-    loadDemoClasses();
+    window.location.href = 'index.html';
   }
 });
 
@@ -103,8 +108,6 @@ async function loadSubjects() {
     });
   } catch (error) {
     console.error('Error loading subjects:', error);
-    // Load demo data if Firebase fails
-    loadDemoSubjects();
   }
 }
 
@@ -123,37 +126,9 @@ async function loadClasses() {
     });
   } catch (error) {
     console.error('Error loading classes:', error);
-    // Load demo data if Firebase fails
-    loadDemoClasses();
   }
 }
 
-// Demo data loaders
-function loadDemoSubjects() {
-  if (subjectSelect) {
-    subjectSelect.innerHTML = `
-      <option value="">Select Subject</option>
-      <option value="math101">Mathematics 101</option>
-      <option value="eng101">English 101</option>
-      <option value="sci101">Science 101</option>
-      <option value="phy101">Physics 101</option>
-      <option value="chem101">Chemistry 101</option>
-    `;
-  }
-}
-
-function loadDemoClasses() {
-  if (classSelect) {
-    classSelect.innerHTML = `
-      <option value="">Select Class</option>
-      <option value="class1">BSIT-3A</option>
-      <option value="class2">BSCS-2B</option>
-      <option value="class3">BSCPE-4C</option>
-      <option value="class4">BSEE-1A</option>
-      <option value="class5">BSME-2C</option>
-    `;
-  }
-}
 
 // Points configuration management
 document.getElementById('addPointsRow')?.addEventListener('click', addPointsRow);
@@ -448,28 +423,33 @@ function handleAnswerKeyBubbleClick(event, questionNumber, choice) {
   console.log('Current Answer Key:', currentAnswerKey);
 }
 
-// Save template
-document.getElementById('saveTemplate')?.addEventListener('click', saveTemplate);
-
+// ✅ FIXED: Allow saving exams without answer keys
 async function saveTemplate() {
-  if (!currentAnswerKey || Object.keys(currentAnswerKey).length === 0) {
-    alert('Please generate an answer sheet first and configure the answer key.');
-    return;
-  }
-  
   const examTitle = examTitleInput?.value || 'Examination';
   const subjectId = subjectSelect?.value;
   const classId = classSelect?.value;
   const totalQuestions = parseInt(totalQuestionsInput?.value) || 30;
   const studentIdLength = parseInt(studentIdLengthInput?.value) || 8;
   const subjectIdLength = parseInt(subjectIdLengthInput?.value) || 0;
-  
+
+  // Basic validation - only require title, subject, and class
+  if (!examTitle.trim()) {
+    alert('Please enter an exam title.');
+    return;
+  }
+
   if (!subjectId || !classId) {
     alert('Please select both subject and class.');
     return;
   }
-  
-  // Convert answer key to format matching existing structure
+
+  // Validate student ID length (mandatory)
+  if (studentIdLength < 1 || studentIdLength > 15) {
+    alert('Student ID length must be between 1 and 15 digits.');
+    return;
+  }
+
+  // Convert answer key into array of items - allow empty array
   const items = [];
   for (let i = 1; i <= totalQuestions; i++) {
     if (currentAnswerKey[i]) {
@@ -479,47 +459,77 @@ async function saveTemplate() {
       });
     }
   }
-  
-  if (items.length === 0) {
-    alert('Please set at least one correct answer.');
-    return;
-  }
-  
+
   try {
-    const questionSetData = {
-      examTitle,
+    // Generate unique ID for this exam
+    currentQuestionSetId = `qset_${Date.now()}`;
+
+    // ✅ Complete exam document data with all necessary fields
+    const examData = {
+      // Primary identifiers
+      examId: currentQuestionSetId,
+      examTitle: examTitle.trim(),
+      name: examTitle.trim(), // Alternative field name for compatibility
+      title: examTitle.trim(), // Another alternative field name
+      
+      // Course/Class information
       subjectId,
       classId,
+      class: classId, // Alternative field name for compatibility
+      
+      // Question configuration
       totalQuestions,
+      choiceOptions: parseInt(choiceOptionsSelect?.value) || 4,
+      choices: parseInt(choiceOptionsSelect?.value) || 4, // Alternative field name
+      questionsPerColumn: parseInt(questionsPerColumnInput?.value) || 15,
+      
+      // ID configuration
       studentIdLength,
       subjectIdLength,
-      items,
+      
+      // Answer key (can be empty)
+      items: items, // Array of answer items - can be empty
+      
+      // Points configuration
       pointsConfiguration: getPointsConfiguration(),
-      choiceOptions: parseInt(choiceOptionsSelect?.value) || 4,
-      createdBy: auth.currentUser?.email || 'demo_user',
+      
+      // Metadata
+      createdBy: auth.currentUser?.email,
+      creator: auth.currentUser?.email, // Alternative field name
       createdAt: new Date(),
-      scannerCompatible: true
+      dateCreated: new Date(), // Alternative field name
+      updatedAt: new Date(),
+      
+      // Technical flags
+      scannerCompatible: true,
+      status: 'active',
+      version: '1.0'
     };
-    
-    // Generate unique ID
-    currentQuestionSetId = `qset_${Date.now()}`;
-    
+
     if (auth.currentUser) {
-      await setDoc(doc(db, 'questions', currentQuestionSetId), {
-        questionSetId: currentQuestionSetId,
-        ...questionSetData
-      });
-      alert('Answer sheet template and answer key saved successfully to Firebase!');
+      // Save to Firebase 'exams' collection
+      await setDoc(doc(db, 'exams', currentQuestionSetId), examData);
+      
+      const message = items.length > 0 
+        ? `Exam saved successfully with ${items.length} answer(s)! Redirecting to dashboard...`
+        : 'Exam saved successfully without answer key! You can add answers later. Redirecting to dashboard...';
+      
+      alert(message);
+      
+      // Redirect to dashboard to show the new exam card
+      window.location.href = 'dashboard.html';
     } else {
-      console.log('Template Data (Demo Mode):', questionSetData);
-      alert('Answer sheet template and answer key saved successfully! (Demo mode - check console for data)');
+      alert('Please log in to save exams.');
+      window.location.href = 'index.html';
     }
-    
   } catch (error) {
-    console.error('Error saving template:', error);
-    alert('Failed to save template. Please try again.');
+    console.error('Error saving exam:', error);
+    alert('Failed to save exam. Please try again.');
   }
 }
+
+// Add save template functionality
+document.getElementById('saveTemplate')?.addEventListener('click', saveTemplate);
 
 // Save answer key
 document.getElementById('saveAnswerKey')?.addEventListener('click', () => {
@@ -594,14 +604,5 @@ document.getElementById('signOutBtn')?.addEventListener('click', () => {
     alert('Failed to log out. Please try again.');
   });
 });
-
-// Initialize demo data if Firebase is not available or user not logged in
-setTimeout(() => {
-  if (!auth.currentUser) {
-    console.log('No authenticated user - loading demo data');
-    loadDemoSubjects();
-    loadDemoClasses();
-  }
-}, 2000);
 
 console.log('Answer Sheet Maker loaded successfully');

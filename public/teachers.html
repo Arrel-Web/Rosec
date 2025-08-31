@@ -4,15 +4,13 @@
   <meta charset="utf-8" />
   <title>Rosec Teachers</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  
+
   <link rel="stylesheet" href="styles.css" />
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" />
 
   <style>
-    /* Sidebar styles (same as your other pages) */
-    .layout {
-      display: flex;
-    }
+    /* Layout */
+    .layout { display: flex; }
     .sidebar {
       width: 240px;
       background: #2d3e50;
@@ -32,10 +30,7 @@
       align-items: center;
       gap: 10px;
     }
-    .sidebar-header .logo {
-      font-size: 1.8rem;
-      color: #ffcc00;
-    }
+    .sidebar-header .logo { font-size: 1.8rem; color: #ffcc00; }
     .sidebar-nav a {
       color: #ddd;
       display: block;
@@ -44,123 +39,56 @@
       margin-bottom: 4px;
       border-radius: 4px;
       font-weight: 500;
-      transition: background 0.2s, color 0.2s;
+      transition: background-color 0.2s ease, color 0.2s ease;
     }
     .sidebar-nav a.active,
-    .sidebar-nav a:hover {
-      background-color: #ffcc00;
-      color: #2d3e50;
-    }
+    .sidebar-nav a:hover { background-color: #ffcc00; color: #2d3e50; }
 
     /* Main area */
     .main-area {
       margin-left: 240px;
       padding: 20px;
       min-height: 100vh;
-      background: #f9fafb;
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    }
-
-    /* Header row */
-    .header-row {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 12px;
-      margin-bottom: 16px;
-    }
-
-    /* Table card */
-    .table-card {
       background: #fff;
-      border-radius: 12px;
-      box-shadow: 0 4px 18px rgba(0,0,0,0.06);
-      overflow: hidden;
-      border: 1px solid #eee;
-    }
-    table {
-      width: 100%;
-      border-collapse: collapse;
-    }
-    th, td {
-      padding: 12px 16px;
-      text-align: left;
-    }
-    th {
-      background: #f3f4f6;
-      font-weight: 600;
-      color: #333;
-      position: sticky;
-      top: 0;
-      z-index: 1;
-    }
-    tbody tr:nth-child(even) {
-      background: #fafafa;
-    }
-    tbody tr:hover {
-      background: #eef4ff;
     }
 
-    /* Modal styling */
-    .modal-overlay {
-      position: fixed;
-      inset: 0;
-      background: rgba(0,0,0,0.5);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      z-index: 1000;
+    /* User dropdown */
+    .user-dropdown { 
+      display: none; 
+      position: absolute; 
+      background: white; 
+      border: 1px solid #ccc; 
+      padding: 10px; 
+      right: 0; 
+      top: 50px; 
+      width: 200px; 
+      box-shadow: 0 2px 6px rgba(0,0,0,0.15); 
+      z-index: 100; 
+      border-radius: 4px; 
     }
-    .modal {
-      background: #fff;
-      width: min(600px, 92vw);
-      max-height: 90vh;
-      overflow: auto;
-      border-radius: 12px;
-      padding: 20px;
-      box-shadow: 0 12px 28px rgba(0,0,0,0.25);
-      animation: modalIn 200ms ease-out;
-    }
-    @keyframes modalIn {
-      from { opacity: 0; transform: translateY(10px) scale(0.96); }
-      to { opacity: 1; transform: translateY(0) scale(1); }
-    }
-    .modal-header {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      margin-bottom: 12px;
-    }
-    .modal-header h3 {
-      margin: 0;
-      font-size: 1.2rem;
-      color: #2d3e50;
-    }
-    .icon-btn {
-      background: transparent;
-      border: none;
-      border-radius: 6px;
-      width: 36px;
-      height: 36px;
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      cursor: pointer;
-      color: #555;
-      font-size: 1.2rem;
-      transition: background 0.2s;
-    }
-    .icon-btn:hover {
-      background: #f2f2f2;
-    }
+    .user-dropdown.show { display: block; }
+    .user-btn { background: transparent; border: none; cursor: pointer; padding: 0; }
+    #userAvatar { width: 32px; height: 32px; border-radius: 50%; object-fit: cover; }
+    .divider { margin: 10px 0; border-bottom: 1px solid #ddd; }
 
-    .hidden { display: none; }
+    /* Table */
+    table { width: 100%; border-collapse: collapse; margin-top: 20px; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+    th, td { border: 1px solid #ccc; padding: 8px 12px; text-align: left; }
+    th { background-color: #f3f3f3; font-weight: 600; }
+    tbody tr:hover { background-color: #eef4ff; }
+
+    /* Modal */
+    .modal-overlay.hidden { display: none; }
+    .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.5); display:flex; align-items:center; justify-content:center; z-index:1000; }
+    .modal { background:#fff; border-radius:8px; padding:16px; min-width:320px; max-width:90%; position:relative; }
+    .modal-close { position:absolute; top:8px; right:8px; }
   </style>
 </head>
 <body>
 
   <div class="layout">
-    <aside class="sidebar">
+    <!-- Sidebar -->
+    <aside class="sidebar" role="navigation" aria-label="Main sidebar navigation">
       <div class="sidebar-header">
         <span class="logo"><i class="fa-solid fa-graduation-cap"></i></span>
         <span class="title">Rosec</span>
@@ -176,86 +104,56 @@
       </nav>
     </aside>
 
-    <main class="main-area">
-      <div class="header-row">
-        <h1>Teachers List</h1>
-        <button id="openAddTeacherBtn" class="btn" style="background:#2d3e50; color:white; padding:8px 12px; border:none; border-radius:4px; cursor:pointer;">
-          <i class="fa-solid fa-user-plus"></i> Add Teacher
-        </button>
-      </div>
+    <!-- Main -->
+    <main class="main-area" role="main">
+      <header class="topbar" style="display:flex; justify-content:space-between; align-items:center;">
+        <div class="brand"><h3 style="margin:0;">Teachers List</h3></div>
+        <div class="top-actions" style="position: relative; display:flex; align-items:center; gap:12px;">
+          <!-- Add Teacher button -->
+          <button id="openAddTeacherBtn" class="btn" style="background:#2d3e50; color:white; padding:8px 12px; border:none; border-radius:4px; cursor:pointer;">
+            <i class="fa-solid fa-user-plus"></i> Add Teacher
+          </button>
 
-      <div class="table-card">
-        <table id="teachersTable" aria-live="polite" aria-label="List of teachers">
-          <thead>
-            <tr>
-              <th>Name</th>
-              <th>Email</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr><td colspan="2" style="text-align:center; color:#666;">Loading teachers...</td></tr>
-          </tbody>
-        </table>
-      </div>
-
-      <div id="modalOverlay" class="modal-overlay hidden" aria-hidden="true">
-        <div class="modal" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
-          <div class="modal-header">
-            <h3 id="modalTitle">Add Teacher</h3>
-            <button id="closeModal" class="icon-btn" aria-label="Close"><i class="fa-solid fa-xmark"></i></button>
-          </div>
-          <div id="modalContent">
-            <!-- Example form copied from student modal -->
-            <form id="addTeacherForm">
-              <div style="margin-bottom:10px;">
-                <label for="teacherName">Name</label><br>
-                <input type="text" id="teacherName" name="teacherName" required style="width:100%; padding:8px; border:1px solid #ccc; border-radius:6px;">
-              </div>
-              <div style="margin-bottom:10px;">
-                <label for="teacherEmail">Email</label><br>
-                <input type="email" id="teacherEmail" name="teacherEmail" required style="width:100%; padding:8px; border:1px solid #ccc; border-radius:6px;">
-              </div>
-              <button type="submit" style="background:#2d3e50; color:white; padding:10px 14px; border:none; border-radius:6px; cursor:pointer;">
-                <i class="fa-solid fa-save"></i> Save
-              </button>
-            </form>
+          <!-- User icon dropdown -->
+          <div class="user">
+            <button id="userIconBtn" class="user-btn">
+              <img id="userAvatar" src="https://static.vecteezy.com/system/resources/previews/000/550/731/original/user-icon-vector.jpg" alt="User avatar" />
+            </button>
+            <div id="userDropdown" class="user-dropdown">
+              <div id="user-name">User Name:</div>
+              <div id="user-email"></div>
+              <div id="user-role" style="font-style: italic; color: #666; margin-top: 4px;">Role: Loading...</div>
+              <div class="divider"></div>
+              <button id="signOutBtn">Log out</button>
+            </div>
           </div>
         </div>
-      </div>
+      </header>
+
+      <!-- Teachers Table -->
+      <table id="teachersTable" aria-live="polite" aria-label="List of teachers">
+        <thead>
+          <tr>
+            <th scope="col">Name</th>
+            <th scope="col">Email</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr><td colspan="2" style="text-align:center; color:#666;">Loading teachers...</td></tr>
+        </tbody>
+      </table>
     </main>
   </div>
 
+  <!-- Modal -->
+  <div id="modalOverlay" class="modal-overlay hidden">
+    <div id="modal" class="modal">
+      <button id="closeModal" class="modal-close">✕</button>
+      <div id="modalContent"></div>
+    </div>
+  </div>
+
+  <!-- Main JS -->
   <script type="module" src="js/teachers.js"></script>
-  <script>
-    // Modal open/close logic
-   const openBtn = document.getElementById("openAddTeacherBtn");
-  const modalOverlay = document.getElementById("modalOverlay");
-  const closeBtn = document.getElementById("closeModal");
-
-  function openModal() {
-    modalOverlay.classList.remove("hidden");
-    modalOverlay.removeAttribute("inert");  // allow interaction
-    modalOverlay.setAttribute("aria-hidden", "false");
-    closeBtn.focus(); // put focus inside modal
-  }
-
-  function closeModal() {
-    // move focus safely back to the opener before hiding
-    openBtn.focus();
-    modalOverlay.classList.add("hidden");
-    modalOverlay.setAttribute("aria-hidden", "true");
-    modalOverlay.setAttribute("inert", ""); // prevent interaction
-  }
-
-  openBtn.addEventListener("click", openModal);
-  closeBtn.addEventListener("click", closeModal);
-
-  // Close if clicked outside modal
-  modalOverlay.addEventListener("click", (e) => {
-    if (e.target === modalOverlay) {
-      closeModal();
-    }
-  });
-  </script>
 </body>
 </html>

@@ -1,7 +1,10 @@
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js';
 import { 
-  getFirestore, collection, addDoc, onSnapshot 
+  getFirestore, collection, addDoc, onSnapshot, getDocs, query, where
 } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js';
+import { 
+  getAuth, onAuthStateChanged, signOut 
+} from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js';
 
 // Your Firebase config
 const firebaseConfig = {
@@ -16,8 +19,69 @@ const firebaseConfig = {
 
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
+const auth = getAuth(app);
 
 const teachersTableBody = document.querySelector('#teachersTable tbody');
+
+// DOM references for user functionality
+const userNameEl = document.getElementById('user-name');
+const userEmailEl = document.getElementById('user-email');
+const userRoleEl = document.getElementById('user-role');
+const userIconBtn = document.getElementById('userIconBtn');
+const userDropdown = document.getElementById('userDropdown');
+const signOutBtn = document.getElementById('signOutBtn');
+
+// ===== USER DROPDOWN FUNCTIONALITY =====
+if (userIconBtn && userDropdown) {
+  userIconBtn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    userDropdown.classList.toggle('show');
+  });
+  document.addEventListener('click', () => {
+    userDropdown.classList.remove('show');
+  });
+}
+
+// ===== GET USER ROLE FUNCTION =====
+async function getUserRole(email) {
+  try {
+    const usersCol = collection(db, 'users');
+    const q = query(usersCol, where('email', '==', email));
+    const querySnapshot = await getDocs(q);
+    if (querySnapshot.empty) return null;
+    return querySnapshot.docs[0].data().role || null;
+  } catch (err) {
+    console.error('Error getting user role:', err);
+    return null;
+  }
+}
+
+// ===== AUTH STATE LISTENER =====
+onAuthStateChanged(auth, async (user) => {
+  if (user) {
+    userNameEl.textContent = user.displayName || 'User Name:';
+    userEmailEl.textContent = user.email;
+
+    const role = await getUserRole(user.email);
+    userRoleEl.textContent = role ? `Role: ${role}` : 'Role: N/A';
+  } else {
+    userNameEl.textContent = 'User Name';
+    userEmailEl.textContent = 'user@example.com';
+    userRoleEl.textContent = 'Role: N/A';
+  }
+});
+
+// ===== SIGN OUT FUNCTIONALITY =====
+if (signOutBtn) {
+  signOutBtn.addEventListener('click', () => {
+    signOut(auth).then(() => {
+      window.location.href = 'index.html';
+    }).catch((error) => {
+      console.error('Log out error:', error);
+      alert('Failed to log out. Please try again.');
+    });
+  });
+}
 
 // ===== Real-time teacher loader =====
 function loadTeachers() {

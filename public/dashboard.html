@@ -60,7 +60,7 @@
 </head>
 <body>
   <div class="layout">
-    <!-- Sidebar (updated to match classes.html) -->
+    <!-- Sidebar -->
     <aside class="sidebar">
       <div class="sidebar-header">
         <span class="logo"><i class="fa-solid fa-graduation-cap"></i></span>
@@ -77,14 +77,14 @@
       </nav>
     </aside>
 
-    <!-- Main -->
+    <!-- Main Content -->
     <div class="main-area">
+      <!-- Header with user info -->
       <header class="topbar">
         <div class="brand">
-          <h1>Welcome to Rosec</h1>
+          <h2>Exams</h2>
         </div>
         <div class="top-actions">
-          <div id="suggested-count" class="suggested-pill"></div>
           <div class="user">
             <button id="userIconBtn" class="user-btn">
               <img id="userAvatar" alt="User avatar" src="https://static.vecteezy.com/system/resources/previews/000/550/731/original/user-icon-vector.jpg" />
@@ -100,54 +100,53 @@
         </div>
       </header>
 
-      <main class="main-content">
-        <!-- Suggested Classes -->
-        <section class="top-row">
-          <div class="card suggested-card">
-            <div class="card-header">
-              <h3>Classes</h3>
-            </div>
-            <div id="suggestedList" class="suggested-list">
-              <p class="muted">Loading...</p>
-            </div>
-          </div>
-        </section>
+      <!-- Table Header Actions -->
+      <div class="table-header">
+        <div class="table-title">
+          <h1>Exams</h1>
+        </div>
+        <div class="table-actions">
+          <button class="filter-btn">
+            <i class="fa-solid fa-filter"></i>
+          </button>
+          <button class="create-btn" id="createExamBtn">
+            + Create exam
+          </button>
+        </div>
+      </div>
 
-        <!-- All Subjects -->
-        <section class="grid-section">
-          <div class="card">
-            <div class="card-header">
-              <h3>Subject List</h3>
-            </div>
-            <div id="subjectsGrid" class="grid">
-              <p class="muted">Loading...</p>
-            </div>
-          </div>
-        </section>
-      </main>
+      <!-- Exams Table -->
+      <div class="table-container">
+        <table class="exams-table">
+          <thead>
+            <tr>
+              <th class="checkbox-col">
+                <input type="checkbox" id="selectAll">
+              </th>
+              <th class="sortable">EXAM TITLE <i class="fa-solid fa-sort"></i></th>
+              <th class="sortable">SUBJECT <i class="fa-solid fa-sort"></i></th>
+              <th class="sortable">CLASS <i class="fa-solid fa-sort"></i></th>
+              <th class="sortable">TOTAL QUESTIONS <i class="fa-solid fa-sort"></i></th>
+              <th class="sortable">CREATED AT <i class="fa-solid fa-sort"></i></th>
+              <th class="actions-col">ACTIONS</th>
+            </tr>
+          </thead>
+          <tbody id="examsTableBody">
+            <!-- Dynamic content will be loaded here -->
+            <tr class="loading-row">
+              <td colspan="7" class="loading-cell">
+                <div class="loading-spinner"></div>
+                Loading exams...
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
     </div>
   </div>
 
-  <!-- Floating Action Button -->
-  <div class="fab-container">
-    <button id="fabBtn" class="fab">+</button>
-    <div id="fabMenu" class="fab-menu">
-      <button class="fab-item" data-action="add-teacher">Add Teacher</button>
-      <button class="fab-item" data-action="add-student">Add Student</button>
-      <button class="fab-item" data-action="create-class">Create Class</button>
-      <button class="fab-item" data-action="create-academic-year">Create Academic Year</button>
-    </div>
-  </div>
-
-  <!-- Modal -->
-  <div id="modalOverlay" class="modal-overlay hidden">
-    <div id="modal" class="modal">
-      <button id="closeModal" class="modal-close">✕</button>
-      <div id="modalContent"></div>
-    </div>
-  </div>
-
-  <!-- Link external JS -->
+  <!-- Script -->
   <script type="module" src="js/dashboard.js"></script>
+
 </body>
 </html>

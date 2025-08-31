@@ -307,22 +307,22 @@ onAuthStateChanged(auth, async (user) => {
 
       if (!querySnapshot.empty) {
         const userData = querySnapshot.docs[0].data();
-        userNameE.textContent = userData.name || user.displayName || 'User Name';
+        userNameE.textContent = user.displayName || 'User Name:';
         userEmail.textContent = userData.email || 'N/A';
         userRole.textContent = `Role: ${userData.role || 'N/A'}`;
       } else {
-        userNameE.textContent = user.displayName || 'User Name';
+        userNameE.textContent = user.displayName || 'User Name:';
         userEmail.textContent = 'N/A';
         userRole.textContent = 'Role: N/A';
       }
     } catch (err) {
       console.error('Error fetching user:', err);
-      userNameE.textContent = user.displayName || 'User Name';
+      userNameE.textContent = user.displayName || 'User Name:';
       userEmail.textContent = 'N/A';
       userRole.textContent = 'Role: N/A';
     }
   } else {
-    userNameE.textContent = 'User Name';
+    userNameE.textContent = 'User Name:';
     userEmail.textContent = 'N/A';
     userRole.textContent = 'Role: N/A';
   }
