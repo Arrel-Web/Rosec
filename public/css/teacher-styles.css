@@ -1,0 +1,29 @@
+
+/* Teacher-specific styles for restricted UI */
+.teacher-layout .create-class-section {
+  display: none !important;
+}
+
+.teacher-layout .class-list-section {
+  flex: 1 1 100% !important;
+  max-width: 100% !important;
+}
+
+.teacher-layout .teacher-assignment-section {
+  display: none !important;
+}
+
+.teacher-layout .restricted-nav-item {
+  display: none !important;
+}
+
+/* Adjust main content area when create class section is hidden */
+.teacher-layout .main-content > div:first-child {
+  justify-content: center;
+}
+
+/* Make subjects grid more prominent for teachers */
+.teacher-layout #subjectsGrid {
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 20px;
+}

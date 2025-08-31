@@ -143,12 +143,12 @@
         <span class="logo"><i class="fa-solid fa-graduation-cap"></i></span>
         <span class="title">Rosec</span>
       </div>
-      <nav class="sidebar-nav">
+      <nav class="sidebar-nav" id="sidebarNav">
         <a href="dashboard.html"><i class="fa-solid fa-house"></i> Dashboard</a>
         <a href="classes.html" class="active"><i class="fa-solid fa-book"></i> Classes</a>
-        <a href="students.html"><i class="fa-solid fa-user-graduate"></i> Students</a>
-        <a href="teachers.html"><i class="fa-solid fa-chalkboard-user"></i> Teachers</a>
-        <a href="academic-periods.html"><i class="fa-solid fa-calendar-days"></i> Academic Periods</a>
+        <a href="students.html" id="studentsLink"><i class="fa-solid fa-user-graduate"></i> Students</a>
+        <a href="teachers.html" id="teachersLink"><i class="fa-solid fa-chalkboard-user"></i> Teachers</a>
+        <a href="academic-periods.html" id="academicPeriodsLink"><i class="fa-solid fa-calendar-days"></i> Academic Periods</a>
         <a href="answer-sheet-maker.html"><i class="fa-solid fa-file-lines"></i> Answer Sheet Maker</a>
         <a href="settings.html"><i class="fa-solid fa-gear"></i> Settings</a>
       </nav>
@@ -178,7 +178,7 @@
         <div style="display: flex; gap: 30px;">
           <!-- Left: Create Class + Class List -->
           <div style="display: flex; gap: 20px; flex-wrap: nowrap; width: 600px; flex-shrink: 0;">
-            <!-- Create Class -->
+            <!-- Create Class - Hidden for Teachers -->
             <section id="createClassSection" style="flex: 1 1 280px; padding: 15px; border: 1px solid #ccc; border-radius: 6px; background: #f9f9f9;">
               <h3>Create New Class</h3>
               <form id="createClassForm" style="display: flex; flex-direction: column;">
@@ -193,8 +193,8 @@
             </section>
 
             <!-- Class List -->
-            <section style="flex: 1 1 280px; padding: 15px; border: 1px solid #ccc; border-radius: 6px; background: #f9f9f9;">
-              <div class="card-header"><h3>Class List</h3></div>
+            <section id="classListSection" style="flex: 1 1 280px; padding: 15px; border: 1px solid #ccc; border-radius: 6px; background: #f9f9f9;">
+              <div class="card-header"><h3 id="classListTitle">Class List</h3></div>
               <div id="suggestedList"><p class="muted">Loading classes...</p></div>
               <div id="suggested-count" class="muted" style="margin-top: 10px;"></div>
             </section>
@@ -212,13 +212,17 @@
                 <input type="hidden" id="selectedClassId" />
                 <input type="text" id="subjectIdInput" placeholder="Subject ID" required style="padding: 8px; margin-bottom: 10px;" />
                 <input type="text" id="subjectNameInput" placeholder="Subject Name" required style="padding: 8px; margin-bottom: 10px;" />
-                <label for="teacherSelect">Assign Teacher:</label>
-                <select id="teacherSelect" style="margin-bottom: 10px;">
-                  <option value="">-- Select Existing Teacher --</option>
-                </select>
-                <p>Or add new teacher:</p>
-                <input type="text" id="newTeacherName" placeholder="New teacher's name" style="margin-bottom: 8px;" />
-                <input type="email" id="newTeacherEmail" placeholder="New teacher's email" style="margin-bottom: 12px;" />
+                <div id="teacherAssignmentSection">
+                  <label for="teacherSelect">Assign Teacher:</label>
+                  <select id="teacherSelect" style="margin-bottom: 10px;">
+                    <option value="">-- Select Existing Teacher --</option>
+                  </select>
+                  <div id="newTeacherSection">
+                    <p>Or add new teacher:</p>
+                    <input type="text" id="newTeacherName" placeholder="New teacher's name" style="margin-bottom: 8px;" />
+                    <input type="email" id="newTeacherEmail" placeholder="New teacher's email" style="margin-bottom: 12px;" />
+                  </div>
+                </div>
                 <button type="submit" style="padding: 8px; background: #2d3e50; color: white; border: none; border-radius: 4px; cursor: pointer;">Add Subject</button>
               </form>
             </section>

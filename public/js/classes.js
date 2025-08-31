@@ -285,15 +285,31 @@ if (addSubjectForm) {
     const subjectId = subjectIdInput.value.trim();
     const subjectName = subjectNameInput.value.trim();
     const classId = selectedClassIdInput.value;
-    const selectedTeacherEmail = teacherEmailInput ? teacherEmailInput.value : '';
-    const newTeacherName = newTeacherNameInput ? newTeacherNameInput.value.trim() : '';
-    const newTeacherEmail = newTeacherEmailInput ? newTeacherEmailInput.value.trim() : '';
+    
+    // Get current user info
+    const user = auth.currentUser;
+    const role = await getUserRole(user.email);
+    
+    let selectedTeacherEmail = '';
+    let newTeacherName = '';
+    let newTeacherEmail = '';
+    
+    if (role === 'teacher') {
+      // For teachers, auto-assign themselves
+      selectedTeacherEmail = user.email;
+    } else {
+      // For admins, use the form inputs
+      selectedTeacherEmail = teacherEmailInput ? teacherEmailInput.value : '';
+      newTeacherName = newTeacherNameInput ? newTeacherNameInput.value.trim() : '';
+      newTeacherEmail = newTeacherEmailInput ? newTeacherEmailInput.value.trim() : '';
+    }
 
     if (!classId || !subjectId || !subjectName) {
       alert('Please fill out all required fields.');
       return;
     }
-    if (!selectedTeacherEmail && (!newTeacherName || !newTeacherEmail)) {
+    
+    if (role === 'admin' && !selectedTeacherEmail && (!newTeacherName || !newTeacherEmail)) {
       alert('Please select an existing teacher or add a new one.');
       return;
     }
@@ -410,17 +426,72 @@ if (createClassForm) {
   });
 }
 
+// Apply UI restrictions based on user role
+function applyRoleRestrictions(role) {
+  if (role === 'teacher') {
+    // Hide create class section
+    const createClassSection = document.getElementById('createClassSection');
+    if (createClassSection) createClassSection.style.display = 'none';
+    
+    // Update class list section to take full width
+    const classListSection = document.getElementById('classListSection');
+    if (classListSection) {
+      classListSection.style.flex = '1 1 100%';
+      classListSection.style.maxWidth = '100%';
+    }
+    
+    // Update class list title
+    const classListTitle = document.getElementById('classListTitle');
+    if (classListTitle) classListTitle.textContent = 'My Assigned Classes';
+    
+    // Hide teacher assignment options in add subject form
+    const teacherAssignmentSection = document.getElementById('teacherAssignmentSection');
+    if (teacherAssignmentSection) teacherAssignmentSection.style.display = 'none';
+    
+    // Hide restricted sidebar links
+    const teachersLink = document.getElementById('teachersLink');
+    const academicPeriodsLink = document.getElementById('academicPeriodsLink');
+    if (teachersLink) teachersLink.style.display = 'none';
+    if (academicPeriodsLink) academicPeriodsLink.style.display = 'none';
+    
+    // Auto-assign current teacher when adding subjects
+    if (teacherEmailInput && userEmailEl) {
+      teacherEmailInput.value = userEmailEl.textContent;
+      teacherEmailInput.style.display = 'none';
+    }
+  } else if (role === 'admin') {
+    // Show all elements for admin
+    const createClassSection = document.getElementById('createClassSection');
+    const teacherAssignmentSection = document.getElementById('teacherAssignmentSection');
+    const teachersLink = document.getElementById('teachersLink');
+    const academicPeriodsLink = document.getElementById('academicPeriodsLink');
+    
+    if (createClassSection) createClassSection.style.display = 'block';
+    if (teacherAssignmentSection) teacherAssignmentSection.style.display = 'block';
+    if (teachersLink) teachersLink.style.display = 'block';
+    if (academicPeriodsLink) academicPeriodsLink.style.display = 'block';
+  }
+}
+
 // Auth state
 onAuthStateChanged(auth, async (user) => {
   if (user) {
     userNameEl.textContent = user.displayName || 'User Name:';
     userEmailEl.textContent = user.email;
     const role = await getUserRole(user.email);
+    
+    // Apply role-based UI restrictions
+    applyRoleRestrictions(role);
+    
     await loadClasses(user.email, role);
     if (addSubjectFormSection) addSubjectFormSection.style.display = 'none';
     if (subjectsGrid) subjectsGrid.innerHTML = `<p class="muted">Select a class to view its subjects.</p>`;
-    await loadTeachersIntoDropdown();
-    await loadAcademicYearsIntoDropdown();
+    
+    // Only load teachers dropdown for admins
+    if (role === 'admin') {
+      await loadTeachersIntoDropdown();
+      await loadAcademicYearsIntoDropdown();
+    }
   } else {
     userNameEl.textContent = 'User Name';
     userEmailEl.textContent = 'user@example.com';
