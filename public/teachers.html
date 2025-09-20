@@ -7,49 +7,45 @@
 
   <link rel="stylesheet" href="styles.css" />
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" />
+  <link rel="stylesheet" href="css/modern-sidebar.css" />
+  <link rel="stylesheet" href="css/user-profile.css" />
+  <link rel="stylesheet" href="css/enhanced-topbar.css" />
+  <link rel="stylesheet" href="css/enhanced-features.css" />
 
   <style>
     /* Layout */
     .layout { display: flex; }
-    .sidebar {
-      width: 240px;
-      background: #2d3e50;
-      color: white;
-      min-height: 100vh;
-      padding: 20px 10px;
-      box-sizing: border-box;
-      position: fixed;
-      left: 0;
-      top: 0;
-    }
-    .sidebar-header {
-      font-size: 1.5rem;
-      font-weight: bold;
-      margin-bottom: 1rem;
-      display: flex;
-      align-items: center;
-      gap: 10px;
-    }
-    .sidebar-header .logo { font-size: 1.8rem; color: #ffcc00; }
-    .sidebar-nav a {
-      color: #ddd;
-      display: block;
-      padding: 10px 15px;
-      text-decoration: none;
-      margin-bottom: 4px;
-      border-radius: 4px;
-      font-weight: 500;
-      transition: background-color 0.2s ease, color 0.2s ease;
-    }
-    .sidebar-nav a.active,
-    .sidebar-nav a:hover { background-color: #ffcc00; color: #2d3e50; }
+    
+    
+    
+    .sidebar.collapsed 
+    
+    
+    .sidebar.collapsed 
+    
+    
+    .sidebar.collapsed 
+    
+    .sidebar.collapsed 
+    
+    
+    .sidebar.collapsed 
+    
+    /* Tooltip for collapsed sidebar */
+    .sidebar.collapsed 
+    .sidebar.collapsed 
+    .sidebar.collapsed 
 
     /* Main area */
     .main-area {
-      margin-left: 240px;
+      position: relative;
       padding: 20px;
+      margin-left: 240px; /* Sidebar width */
       min-height: 100vh;
       background: #fff;
+      width: 100%;
+      box-sizing: border-box;
+      transition: margin-left 0.3s ease;
     }
 
     /* User dropdown */
@@ -77,71 +73,454 @@
     th { background-color: #f3f3f3; font-weight: 600; }
     tbody tr:hover { background-color: #eef4ff; }
 
+    /* Bulk Actions Bar */
+    .bulk-actions-bar {
+      display: none;
+      background: #e8f0fe;
+      border: 1px solid #1a73e8;
+      border-radius: 8px;
+      margin: 15px 0;
+      padding: 12px 20px;
+      animation: slideDown 0.3s ease-out;
+    }
+
+    .bulk-actions-bar.show {
+      display: block;
+    }
+
+    .bulk-actions-content {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .selected-count {
+      color: #1967d2;
+      font-weight: 600;
+      font-size: 14px;
+    }
+
+    .bulk-actions-buttons {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+    }
+
+    .bulk-delete-btn {
+      background: #ea4335;
+      color: white;
+      border: none;
+      padding: 8px 16px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-weight: 600;
+      font-size: 14px;
+      transition: all 0.2s ease;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .bulk-delete-btn:hover {
+      background: #d33b2c;
+      transform: translateY(-1px);
+      box-shadow: 0 2px 8px rgba(234,67,53,0.3);
+    }
+
+    .cancel-selection-btn {
+      background: transparent;
+      color: #5f6368;
+      border: 1px solid #dadce0;
+      padding: 8px 16px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-weight: 500;
+      font-size: 14px;
+      transition: all 0.2s ease;
+    }
+
+    .cancel-selection-btn:hover {
+      background: #f1f3f4;
+      border-color: #5f6368;
+    }
+
+    @keyframes slideDown {
+      from {
+        opacity: 0;
+        transform: translateY(-10px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    /* Checkbox Styles */
+    input[type="checkbox"] {
+      width: 16px;
+      height: 16px;
+      accent-color: #1a73e8;
+      cursor: pointer;
+    }
+
     /* Modal */
     .modal-overlay.hidden { display: none; }
-    .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.5); display:flex; align-items:center; justify-content:center; z-index:1000; }
-    .modal { background:#fff; border-radius:8px; padding:16px; min-width:320px; max-width:90%; position:relative; }
-    .modal-close { position:absolute; top:8px; right:8px; }
+    .modal-overlay { 
+      position: fixed; 
+      inset: 0; 
+      background: rgba(0,0,0,0.5); 
+      display: flex; 
+      align-items: center; 
+      justify-content: center; 
+      z-index: 1000; 
+    }
+    .modal { 
+      background: #fff; 
+      border-radius: 12px; 
+      padding: 24px; 
+      min-width: 400px; 
+      max-width: 90%; 
+      position: relative; 
+      box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+      max-height: 90vh;
+      overflow-y: auto;
+    }
+    .modal-close { 
+      position: absolute; 
+      top: 12px; 
+      right: 12px; 
+      background: #f1f3f4;
+      border: none;
+      border-radius: 50%;
+      width: 32px;
+      height: 32px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      font-size: 16px;
+      color: #5f6368;
+      transition: all 0.2s ease;
+    }
+    .modal-close:hover {
+      background: #e8eaed;
+      color: #3c4043;
+    }
+
+    /* Responsive Design */
+    @media (max-width: 768px) {
+      .main-area {
+        margin-left: 0;
+        width: 100%;
+      }
+
+      .sidebar {
+        transform: translateX(-100%);
+        transition: transform 0.3s ease;
+      }
+
+      .sidebar.show {
+        transform: translateX(0);
+      }
+    }
   </style>
 </head>
 <body>
 
   <div class="layout">
     <!-- Sidebar -->
-    <aside class="sidebar" role="navigation" aria-label="Main sidebar navigation">
+        <!-- Modern Sidebar -->
+    <aside class="sidebar" id="sidebar">
       <div class="sidebar-header">
-        <span class="logo"><i class="fa-solid fa-graduation-cap"></i></span>
-        <span class="title">Rosec</span>
+        <div class="sidebar-brand">
+          <div class="sidebar-logo">
+            <i class="fa-solid fa-graduation-cap"></i>
+          </div>
+          <div>
+            <div class="sidebar-title">Rosec</div>
+          </div>
+        </div>
+        <button class="sidebar-toggle" id="sidebarToggle">
+          <div class="hamburger-line"></div>
+          <div class="hamburger-line"></div>
+          <div class="hamburger-line"></div>
+        </button>
       </div>
+      
       <nav class="sidebar-nav">
-        <a href="dashboard.html"><i class="fa-solid fa-house"></i> Dashboard</a>
-        <a href="classes.html"><i class="fa-solid fa-book"></i> Classes</a>
-        <a href="students.html"><i class="fa-solid fa-user-graduate"></i> Students</a>
-        <a href="teachers.html" class="active"><i class="fa-solid fa-chalkboard-user"></i> Teachers</a>
-        <a href="academic-periods.html"><i class="fa-solid fa-calendar-days"></i> Academic Periods</a>
-        <a href="answer-sheet-maker.html"><i class="fa-solid fa-file-lines"></i> Answer Sheet Maker</a>
-        <a href="settings.html"><i class="fa-solid fa-gear"></i> Settings</a>
+        <div class="nav-section">
+          <div class="nav-section-title">Main</div>
+        </div>
+        
+        <div class="nav-item">
+          <a href="dashboard.html" class="nav-link" data-tooltip="Dashboard">
+            <div class="nav-icon">
+              <i class="fa-solid fa-house"></i>
+            </div>
+            <span class="nav-text">Dashboard</span>
+          </a>
+        </div>
+        
+        <div class="nav-item">
+          <a href="analytics.html" class="nav-link" data-tooltip="Analytics">
+            <div class="nav-icon">
+              <i class="fa-solid fa-chart-line"></i>
+            </div>
+            <span class="nav-text">Analytics</span>
+          </a>
+        </div>
+        
+        <div class="nav-section">
+          <div class="nav-section-title">Management</div>
+        </div>
+        
+        <div class="nav-item">
+          <a href="students.html" class="nav-link" data-tooltip="Students">
+            <div class="nav-icon">
+              <i class="fa-solid fa-user-graduate"></i>
+            </div>
+            <span class="nav-text">Students</span>
+          </a>
+        </div>
+        
+        <div class="nav-item">
+          <a href="teachers.html" class="nav-link active" data-tooltip="Teachers">
+            <div class="nav-icon">
+              <i class="fa-solid fa-chalkboard-user"></i>
+            </div>
+            <span class="nav-text">Teachers</span>
+          </a>
+        </div>
+        
+        <div class="nav-item">
+          <a href="classes.html" class="nav-link" data-tooltip="Classes">
+            <div class="nav-icon">
+              <i class="fa-solid fa-book"></i>
+            </div>
+            <span class="nav-text">Classes</span>
+          </a>
+        </div>
+        
+        <div class="nav-item">
+          <a href="academic-periods.html" class="nav-link" id="academic-periods-nav" data-tooltip="Academic Periods">
+            <div class="nav-icon">
+              <i class="fa-solid fa-calendar-days"></i>
+            </div>
+            <span class="nav-text">Academic Periods</span>
+          </a>
+        </div>
+        
+        <div class="nav-section">
+          <div class="nav-section-title">Tools</div>
+        </div>
+        
+        <div class="nav-item">
+          <a href="answer-sheet-maker.html" class="nav-link" data-tooltip="Answer Sheet Maker">
+            <div class="nav-icon">
+              <i class="fa-solid fa-file-lines"></i>
+            </div>
+            <span class="nav-text">Answer Sheet Maker</span>
+          </a>
+        </div>
+        
+        <div class="nav-section">
+          <div class="nav-section-title">System</div>
+        </div>
+        
+        <div class="nav-item">
+          <a href="settings.html" class="nav-link" data-tooltip="Settings">
+            <div class="nav-icon">
+              <i class="fa-solid fa-gear"></i>
+            </div>
+            <span class="nav-text">Settings</span>
+          </a>
+        </div>
       </nav>
     </aside>
 
     <!-- Main -->
     <main class="main-area" role="main">
-      <header class="topbar" style="display:flex; justify-content:space-between; align-items:center;">
-        <div class="brand"><h3 style="margin:0;">Teachers List</h3></div>
-        <div class="top-actions" style="position: relative; display:flex; align-items:center; gap:12px;">
-          <!-- Add Teacher button -->
-          <button id="openAddTeacherBtn" class="btn" style="background:#2d3e50; color:white; padding:8px 12px; border:none; border-radius:4px; cursor:pointer;">
-            <i class="fa-solid fa-user-plus"></i> Add Teacher
-          </button>
-
-          <!-- User icon dropdown -->
-          <div class="user">
-            <button id="userIconBtn" class="user-btn">
-              <img id="userAvatar" src="https://static.vecteezy.com/system/resources/previews/000/550/731/original/user-icon-vector.jpg" alt="User avatar" />
+      <header class="header">
+        <div class="header-left">
+          <div class="header-navigation">
+            <button class="nav-btn" onclick="history.back()" title="Go Back">
+              <i class="fa-solid fa-arrow-left"></i>
+            </button>
+            <button class="nav-btn" onclick="window.location.href='dashboard.html'" title="Dashboard">
+              <i class="fa-solid fa-house"></i>
+            </button>
+          </div>
+          <div class="header-title">
+            <h1>Teachers</h1>
+            <p>Manage teacher accounts and assignments</p>
+          </div>
+        </div>
+        
+        <div class="user-section">
+          <div class="user-profile">
+            <button id="userIconBtn" class="user-profile-btn">
+              <div class="user-avatar">
+                <i class="fa-solid fa-user"></i>
+              </div>
+              <div class="user-info">
+                <span class="user-name" id="userNameDisplay">Loading...</span>
+                <span class="user-role-badge" id="userRoleBadge">User</span>
+              </div>
+              <i class="fa-solid fa-chevron-down dropdown-arrow"></i>
             </button>
             <div id="userDropdown" class="user-dropdown">
-              <div id="user-name">User Name:</div>
-              <div id="user-email"></div>
-              <div id="user-role" style="font-style: italic; color: #666; margin-top: 4px;">Role: Loading...</div>
-              <div class="divider"></div>
-              <button id="signOutBtn">Log out</button>
+              <div class="dropdown-header">
+                <div class="dropdown-avatar">
+                  <i class="fa-solid fa-user"></i>
+                </div>
+                <div class="dropdown-user-info">
+                  <div class="dropdown-name" id="user-name">User Name</div>
+                  <div class="dropdown-email" id="user-email">user@example.com</div>
+                  <div class="dropdown-role" id="user-role">Role: Loading...</div>
+                </div>
+              </div>
+              <div class="dropdown-divider"></div>
+              <div class="dropdown-menu">
+                <button class="dropdown-item" id="profileBtn">
+                  <i class="fa-solid fa-user-circle"></i>
+                  <span>Profile</span>
+                </button>
+                <button class="dropdown-item" id="settingsBtn">
+                  <i class="fa-solid fa-cog"></i>
+                  <span>Settings</span>
+                </button>
+                <div class="dropdown-divider"></div>
+                <button class="dropdown-item danger" id="signOutBtn">
+                  <i class="fa-solid fa-sign-out-alt"></i>
+                  <span>Sign Out</span>
+                </button>
+              </div>
             </div>
           </div>
         </div>
       </header>
 
-      <!-- Teachers Table -->
-      <table id="teachersTable" aria-live="polite" aria-label="List of teachers">
+      <!-- Bulk Actions Bar (hidden by default) -->
+      <div class="bulk-actions-bar" id="bulkActionsBar">
+        <div class="bulk-actions-content">
+          <span class="selected-count" id="selectedCount">0 items selected</span>
+          <div class="bulk-actions-buttons">
+            <button class="bulk-delete-btn" id="bulkDeleteBtn">
+              <i class="fa-solid fa-trash"></i> Delete Selected
+            </button>
+            <button class="cancel-selection-btn" id="cancelSelectionBtn">
+              Cancel
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Teacher Action Cards -->
+      <div class="content-padding">
+        <div class="action-cards-section">
+          <div class="action-cards-grid">
+            <!-- Quick Add Teacher Card -->
+            <div class="action-card-modern" id="quickAddTeacherCard">
+              <div class="action-card-icon teacher-icon">
+                <i class="fa-solid fa-chalkboard-user"></i>
+              </div>
+              <div class="action-card-content">
+                <h3 class="action-card-title">Add New Teacher</h3>
+                <p class="action-card-description">Add individual teacher accounts</p>
+                <div class="action-card-features">
+                  <span class="feature-tag">Account Setup</span>
+                  <span class="feature-tag">Individual</span>
+                </div>
+              </div>
+              <div class="action-card-arrow">
+                <i class="fa-solid fa-arrow-right"></i>
+              </div>
+            </div>
+
+            <!-- Bulk Add Teachers Card -->
+            <div class="action-card-modern" id="bulkAddTeachersCard">
+              <div class="action-card-icon bulk-teacher-icon">
+                <i class="fa-solid fa-user-group"></i>
+              </div>
+              <div class="action-card-content">
+                <h3 class="action-card-title">Bulk Add Teachers</h3>
+                <p class="action-card-description">Add multiple teachers at once</p>
+                <div class="action-card-features">
+                  <span class="feature-tag">Multiple Entry</span>
+                  <span class="feature-tag">Batch Process</span>
+                </div>
+              </div>
+              <div class="action-card-arrow">
+                <i class="fa-solid fa-arrow-right"></i>
+              </div>
+            </div>
+
+            <!-- Teacher Statistics Card -->
+            <div class="action-card-modern stats-card-modern" id="teacherStatsCard">
+              <div class="action-card-icon stats-icon">
+                <i class="fa-solid fa-chart-bar"></i>
+              </div>
+              <div class="action-card-content">
+                <h3 class="action-card-title">Teacher Statistics</h3>
+                <p class="action-card-description">View teacher statistics and reports</p>
+                <div class="action-card-stats">
+                  <span class="stats-number" id="totalTeachersCount">0</span>
+                  <span class="stats-label">Total Teachers</span>
+                </div>
+              </div>
+              <div class="action-card-arrow">
+                <i class="fa-solid fa-chart-line"></i>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Teachers Table -->
+        <div class="card">
+          <div class="card-header">
+            <div class="card-header-content">
+              <div class="card-header-text">
+                <h2 class="card-title">Teachers Management</h2>
+                <p class="card-subtitle">View and manage all teachers</p>
+              </div>
+              <div class="card-header-search">
+                <div class="search-container">
+                  <input 
+                    type="text" 
+                    id="searchInput" 
+                    placeholder="Search by Name..." 
+                    class="search-input"
+                  />
+                  <i class="fa-solid fa-search search-icon"></i>
+                  <button 
+                    id="clearSearchBtn" 
+                    class="clear-search-btn"
+                    title="Clear search"
+                    style="display: none;"
+                  >
+                    <i class="fa-solid fa-times"></i>
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        <table id="teachersTable" aria-live="polite" aria-label="List of teachers">
         <thead>
           <tr>
+            <th scope="col" style="width: 50px; text-align: center;">
+              <input type="checkbox" id="selectAll">
+            </th>
             <th scope="col">Name</th>
             <th scope="col">Email</th>
+            <th scope="col">Actions</th>
           </tr>
         </thead>
         <tbody>
-          <tr><td colspan="2" style="text-align:center; color:#666;">Loading teachers...</td></tr>
+          <tr><td colspan="4" style="text-align:center; color:#666;">Loading teachers...</td></tr>
         </tbody>
-      </table>
+        </table>
+        </div>
+      </div>
     </main>
   </div>
 
@@ -153,7 +532,68 @@
     </div>
   </div>
 
-  <!-- Main JS -->
+  <!-- Scripts -->
+  <script>
+    // Apply immediate restrictions for teachers before page fully loads
+    // This prevents the flash of restricted content
+    (function() {
+      // Check if user is likely a teacher (this is a quick check, full verification happens later)
+      const userRole = localStorage.getItem('userRole');
+      
+      if (userRole === 'teacher') {
+        // Apply immediate CSS restrictions
+        const style = document.createElement('style');
+        style.id = 'immediate-teacher-restrictions';
+        style.textContent = `
+          /* Hide teacher-restricted elements immediately */
+          a[href*="teachers.html"],
+          a[href*="academic-periods.html"] {
+            display: none !important;
+          }
+        `;
+        document.head.appendChild(style);
+      }
+    })();
+  </script>
+  <script src="js/mobile-menu.js"></script>
+  <script src="js/user-profile.js"></script>
+  <script type="module">
+    // Import Firebase modules for user-profile.js to work properly
+    import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js';
+    import { 
+      getFirestore, collection, getDocs, query, where
+    } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js';
+    import { 
+      getAuth, onAuthStateChanged, signOut 
+    } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js';
+
+    // Firebase Config
+    const firebaseConfig = {
+      apiKey: "AIzaSyAznHzrOLmLvI98_0P649Tx5TZEwXaNNBs",
+      authDomain: "rosec-57d1d.firebaseapp.com",
+      projectId: "rosec-57d1d",
+      storageBucket: "rosec-57d1d.appspot.com",
+      messagingSenderId: "994663054798",
+      appId: "1:994663054798:web:6214585d90b6fcc583bf9f",
+      measurementId: "G-LM6RHY4WTZ"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+    const auth = getAuth(app);
+
+    // Make Firebase functions globally available for user-profile.js
+    window.getAuth = getAuth;
+    window.getFirestore = getFirestore;
+    window.onAuthStateChanged = onAuthStateChanged;
+    window.signOut = signOut;
+    window.collection = collection;
+    window.getDocs = getDocs;
+    window.query = query;
+    window.where = where;
+  </script>
+  <script type="module" src="js/sidebar-toggle.js"></script>
+  <script type="module" src="js/theme-manager.js"></script>
   <script type="module" src="js/teachers.js"></script>
 </body>
 </html>

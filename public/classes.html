@@ -6,229 +6,1014 @@
   <title>Rosec Classes</title>
   <link rel="stylesheet" href="styles.css" />
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" />
+  <link rel="stylesheet" href="css/modern-sidebar.css" />
+  <link rel="stylesheet" href="css/user-profile.css" />
+  <link rel="stylesheet" href="css/enhanced-topbar.css" />
+  <link rel="stylesheet" href="css/enhanced-features.css" />
   <style>
-    .layout {
+    .main-area {
+      background: linear-gradient(180deg,#fafafa,#f1f3f4);
       display: flex;
+      flex-direction: column;
     }
-    .sidebar {
-      width: 240px;
-      background: #2d3e50;
+
+    .content-layout {
+      display: grid;
+      grid-template-columns: 400px 1fr;
+      gap: 30px;
+      align-items: start;
+      padding: 25px;
+    }
+
+    /* Teacher-specific layout adjustments */
+    .content-layout.teacher-layout {
+      grid-template-columns: 1fr;
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+
+    /* Teacher-specific styling improvements */
+    .teacher-layout .grid-container {
+      margin-top: 0;
+    }
+
+    .teacher-layout .classes-grid {
+      max-height: none;
+      padding: 20px 0;
+    }
+
+    .teacher-layout .grid-header h3 {
+      color: #1a73e8;
+    }
+
+    .teacher-layout .grid-header h3::before {
+      content: "My ";
+      color: #666;
+      font-weight: normal;
+    }
+
+    /* Hide delete buttons for teachers */
+    .teacher-layout .delete-class-btn {
+      display: none !important;
+    }
+
+    /* Teacher welcome message */
+    .teacher-welcome {
+      background: linear-gradient(135deg, #e8f0fe, #f0f7ff);
+      border: 1px solid #1a73e8;
+      border-radius: 12px;
+      padding: 20px;
+      margin-bottom: 25px;
+      text-align: center;
+    }
+
+    .teacher-welcome h3 {
+      color: #1a73e8;
+      margin: 0 0 10px 0;
+      font-size: 18px;
+    }
+
+    .teacher-welcome p {
+      color: #666;
+      margin: 0;
+      font-size: 14px;
+    }
+
+    .form-card,
+    .card {
+      background: white;
+      border-radius: 12px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+      border: 1px solid #e0e0e0;
+      overflow: hidden;
+    }
+
+    /* Card header styling handled by enhanced-features.css */
+    
+    .form-icon {
+      width: 45px;
+      height: 45px;
+      background: linear-gradient(135deg, #1a73e8, #4285f4);
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
       color: white;
-      min-height: 100vh;
-      padding: 20px 10px;
-      box-sizing: border-box;
-      position: fixed;
-      left: 0;
-      top: 0;
+      font-size: 18px;
+      box-shadow: 0 3px 12px rgba(26, 115, 232, 0.3);
+      flex-shrink: 0;
     }
-    .sidebar-header {
-      font-size: 1.5rem;
-      font-weight: bold;
-      margin-bottom: 1rem;
+
+    .card-content {
+      padding: 25px;
+    }
+
+    .form-card h3 {
+      font-size: 20px;
+      color: #333;
+      margin-bottom: 20px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .form-group {
+      margin-bottom: 20px;
+    }
+
+    .form-group label {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-weight: 600;
+      color: #333;
+      margin-bottom: 8px;
+      font-size: 14px;
+    }
+
+    .form-group label i {
+      color: #1a73e8;
+      font-size: 16px;
+      width: 16px;
+    }
+
+    .input-wrapper {
+      position: relative;
+      display: flex;
+      align-items: center;
+    }
+
+    .input-wrapper i {
+      position: absolute;
+      left: 12px;
+      color: #666;
+      font-size: 14px;
+      z-index: 2;
+      transition: color 0.2s ease;
+    }
+
+    .form-group input,
+    .form-group select {
+      width: 100%;
+      padding: 12px 12px 12px 40px;
+      border: 1px solid #ddd;
+      border-radius: 8px;
+      font-size: 14px;
+      transition: border-color 0.2s ease, box-shadow 0.2s ease;
+      background: white;
+    }
+
+    .form-group select {
+      padding-left: 40px;
+      appearance: none;
+      background-image: url('data:image/svg+xml;charset=US-ASCII,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 4 5"><path fill="%23666" d="M2 0L0 2h4zm0 5L0 3h4z"/></svg>');
+      background-repeat: no-repeat;
+      background-position: right 12px center;
+      background-size: 12px;
+    }
+
+    .form-group input:focus,
+    .form-group select:focus {
+      outline: none;
+      border-color: #1a73e8;
+      box-shadow: 0 0 0 3px rgba(26, 115, 232, 0.1);
+    }
+
+    .form-group input:focus + i,
+    .form-group select:focus + i,
+    .input-wrapper:focus-within i {
+      color: #1a73e8;
+    }
+
+    .btn {
+      padding: 12px 20px;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      font-weight: 600;
+      font-size: 14px;
+      transition: all 0.2s ease;
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      margin-right: 10px;
+      margin-bottom: 10px;
+    }
+
+    .btn:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+    }
+
+    .btn-primary {
+      background: #1a73e8;
+      color: white;
+    }
+
+    .btn-primary:hover {
+      background: #1557b0;
+    }
+
+    .btn-secondary {
+      background: #6c757d;
+      color: white;
+    }
+
+    .btn-secondary:hover {
+      background: #5a6268;
+    }
+
+    .grid-container {
+      background: white;
+      border-radius: 12px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+      padding: 25px;
+      border: 1px solid #e0e0e0;
+    }
+
+    .grid-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+    }
+
+    .grid-header h3 {
+      font-size: 20px;
+      color: #333;
+      margin: 0;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .classes-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      gap: 20px;
+      max-height: 400px;
+      overflow-y: auto;
+      padding: 10px 0;
+    }
+
+    .class-card {
+      background: linear-gradient(135deg, #ffffff, #f8f9ff);
+      border-radius: 12px;
+      border: 1px solid #e0e0e0;
+      padding: 20px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+      transition: all 0.2s ease;
+      cursor: pointer;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .class-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 4px;
+      background: linear-gradient(90deg, #1a73e8, #4285f4, #1557b0, #2196f3);
+      transform: translateX(-100%);
+      transition: transform 0.3s ease;
+    }
+
+    .class-card:hover::before {
+      transform: translateX(0);
+    }
+
+    .class-card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 20px rgba(0,0,0,0.15);
+      border-color: #1a73e8;
+    }
+
+    .class-card:hover .delete-class-btn {
+      opacity: 1;
+      visibility: visible;
+    }
+
+    .class-card.selected {
+      border-color: #1a73e8;
+      background: linear-gradient(135deg, #e8f0fe, #f0f7ff);
+    }
+
+    .delete-class-btn {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      background: #dc3545;
+      color: white;
+      border: none;
+      border-radius: 50%;
+      width: 28px;
+      height: 28px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      font-size: 12px;
+      opacity: 0;
+      visibility: hidden;
+      transition: all 0.2s ease;
+      z-index: 5;
+    }
+
+    .delete-class-btn:hover {
+      background: #c82333;
+      transform: scale(1.1);
+    }
+
+    .class-card h5 {
+      margin: 0 0 12px 0;
+      font-size: 18px;
+      font-weight: 600;
+      color: #2d3e50;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .class-card h5::before {
+      content: '\f02d';
+      font-family: 'Font Awesome 6 Free';
+      font-weight: 900;
+      color: #1a73e8;
+      font-size: 16px;
+    }
+
+    .card-detail {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 8px;
+      font-size: 14px;
+    }
+
+    .card-detail .label {
+      color: #666;
+      font-weight: 500;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .card-detail .label i {
+      color: #1a73e8;
+      font-size: 12px;
+      width: 12px;
+    }
+
+    .card-detail .value {
+      color: #333;
+      font-weight: 600;
+    }
+
+    .subjects-section {
+      margin-top: 30px;
+    }
+
+    .subjects-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+      gap: 20px;
+      margin-top: 20px;
+    }
+
+    .subject-card {
+      background: white;
+      border-radius: 12px;
+      border: 1px solid #e0e0e0;
+      padding: 20px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+      transition: all 0.2s ease;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .subject-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 3px;
+      background: linear-gradient(90deg, #34a853, #4285f4);
+      transform: translateX(-100%);
+      transition: transform 0.3s ease;
+    }
+
+    .subject-card:hover::before {
+      transform: translateX(0);
+    }
+
+    .subject-card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 20px rgba(0,0,0,0.15);
+      border-color: #1a73e8;
+    }
+
+    .subject-card h4 {
+      margin: 0 0 8px 0;
+      font-size: 16px;
+      font-weight: 600;
+      color: #2d3e50;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .subject-card h4::before {
+      content: '\f02d';
+      font-family: 'Font Awesome 6 Free';
+      font-weight: 900;
+      color: #34a853;
+      font-size: 14px;
+    }
+
+    .subject-card .subject-id {
+      color: #666;
+      font-size: 14px;
+      margin-bottom: 12px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .subject-card .subject-id::before {
+      content: '\f292';
+      font-family: 'Font Awesome 6 Free';
+      font-weight: 900;
+      color: #1a73e8;
+      font-size: 12px;
+    }
+
+    .subject-card .teacher-info {
+      color: #1a73e8;
+      font-size: 14px;
+      font-weight: 500;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .subject-card .teacher-info::before {
+      content: '\f51c';
+      font-family: 'Font Awesome 6 Free';
+      font-weight: 900;
+      color: #1a73e8;
+      font-size: 12px;
+    }
+
+    .empty-state {
+      text-align: center;
+      padding: 60px 20px;
+      color: #666;
+      background: linear-gradient(135deg, #f8f9ff, #ffffff);
+      border-radius: 12px;
+      border: 2px dashed #e0e0e0;
+      transition: all 0.3s ease;
+    }
+
+    .empty-state:hover {
+      border-color: #1a73e8;
+      background: linear-gradient(135deg, #e8f0fe, #f0f7ff);
+    }
+
+    .empty-state i {
+      font-size: 48px;
+      color: #ccc;
+      margin-bottom: 15px;
+      transition: color 0.3s ease;
+    }
+
+    .empty-state:hover i {
+      color: #1a73e8;
+    }
+
+    .empty-state h3 {
+      margin-bottom: 10px;
+      color: #333;
+      font-size: 20px;
+    }
+
+    .empty-state p {
+      color: #666;
+      font-size: 14px;
+      margin: 0;
+    }
+
+    .add-subject-form {
+      background: white;
+      border-radius: 12px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+      padding: 25px;
+      border: 1px solid #e0e0e0;
+      margin-top: 20px;
+      display: none;
+      position: relative;
+      z-index: 10;
+      animation: slideDown 0.3s ease-out;
+    }
+
+    .add-subject-form.show {
+      display: block !important;
+    }
+
+    @keyframes slideDown {
+      from {
+        opacity: 0;
+        transform: translateY(-10px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .loading-spinner {
+      width: 40px;
+      height: 40px;
+      border: 4px solid #f3f3f3;
+      border-top: 4px solid #1a73e8;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+      margin: 0 auto 20px;
+    }
+
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+
+    .section-divider {
+      margin: 25px 0;
+      padding: 15px 0;
+      border-top: 2px solid #f0f0f0;
+    }
+
+    .section-divider h4 {
+      font-size: 16px;
+      color: #333;
+      margin-bottom: 15px;
       display: flex;
       align-items: center;
       gap: 10px;
-    }
-    .sidebar-header .logo {
-      font-size: 1.8rem;
-      color: #ffcc00;
-    }
-    .sidebar-nav a {
-      color: #ddd;
-      display: block;
       padding: 10px 15px;
-      text-decoration: none;
-      margin-bottom: 4px;
-      border-radius: 4px;
-      font-weight: 500;
-    }
-    .sidebar-nav a.active,
-    .sidebar-nav a:hover {
-      background-color: #ffcc00;
-      color: #2d3e50;
-    }
-    .main-area {
-      position: relative;
-      padding: 20px;
-      margin-left: 240px; /* Sidebar width */
-      min-height: 100vh;
-      background: #fff;
-      width: 100%;
-      box-sizing: border-box;
-    }
-    /* User dropdown */
-    .user-dropdown { 
-      display: none; 
-      position: absolute; 
-      background: white; 
-      border: 1px solid #ccc; 
-      padding: 12px; 
-      right: 0; 
-      top: 56px; 
-      width: 220px; 
-      box-shadow: 0 6px 18px rgba(0,0,0,0.12); 
-      border-radius: 8px; 
-      z-index: 1000; 
-    }
-    .user-dropdown.show { display: block; }
-
-    .user-btn { 
-      background: transparent; 
-      border: none; 
-      cursor: pointer; 
-      padding: 0; 
+      background: linear-gradient(135deg, #f8f9ff, #e8f0fe);
+      border-radius: 8px;
+      border-left: 4px solid #1a73e8;
     }
 
-    #userAvatar { 
-      width: 56px; 
-      height: 56px; 
-      border-radius: 50%; 
-      object-fit: cover; 
+    .section-divider h4 i {
+      color: #1a73e8;
+      font-size: 18px;
     }
 
-    .divider { 
-      margin: 8px 0; 
-      border-bottom: 1px solid #eee; 
+    @media (max-width: 1024px) {
+      .content-layout {
+        grid-template-columns: 1fr;
+        gap: 20px;
+      }
+
+      .classes-grid {
+        grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+      }
     }
 
-    /* Classes and subjects */
-    .class-card, .suggested-item { 
-      background: #f9f9f9; 
-      padding: 15px; 
-      margin: 8px 0; 
-      border-radius: 8px; 
-      cursor: pointer; 
-      transition: background-color 0.2s ease; 
+    @media (max-width: 768px) {
+      .main-area {
+        margin-left: 0;
+        width: 100%;
+      }
+
+      .sidebar {
+        transform: translateX(-100%);
+        transition: transform 0.3s ease;
+      }
+
+      .content-layout {
+        padding: 15px;
+      }
+
+      .classes-grid {
+        grid-template-columns: 1fr;
+      }
     }
-    .class-card:hover, .suggested-item:hover { background-color: #e0e0e0; }
-
-    .muted { color: #777; font-style: italic; }
-
-    .main-area { 
-      position: relative; 
-      padding: 20px; 
-      margin-left: 240px; 
-      min-height: 100vh; 
-      background: #fff; 
-    }
-
-    #subjectsGrid { 
-      display: grid; 
-      grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); 
-      gap: 16px; 
-      margin-top: 20px; 
-    }
-
-    .grid-item, .subject-card { 
-      background: #f5f5f5; 
-      padding: 12px; 
-      border-radius: 8px; 
-      box-shadow: 0 1px 3px rgba(0,0,0,0.1); 
-      min-height: 120px; /* consistent height for all cards */ 
-      display: flex; 
-      flex-direction: column; 
-      justify-content: center; 
-    }
-
-    .subject-card h4 { margin: 0 0 6px; font-weight: 600; }
-
-    #addSubjectFormSection { display: none; margin-top: 20px; }
   </style>
 </head>
 <body>
   <div class="layout">
-    <!-- Sidebar -->
-    <aside class="sidebar">
+    <!-- Modern Sidebar -->
+    <aside class="sidebar" id="sidebar">
       <div class="sidebar-header">
-        <span class="logo"><i class="fa-solid fa-graduation-cap"></i></span>
-        <span class="title">Rosec</span>
+        <div class="sidebar-brand">
+          <div class="sidebar-logo">
+            <i class="fa-solid fa-graduation-cap"></i>
+          </div>
+          <div>
+            <div class="sidebar-title">Rosec</div>
+          </div>
+        </div>
+        <button class="sidebar-toggle" id="sidebarToggle">
+          <div class="hamburger-line"></div>
+          <div class="hamburger-line"></div>
+          <div class="hamburger-line"></div>
+        </button>
       </div>
+      
       <nav class="sidebar-nav">
-        <a href="dashboard.html"><i class="fa-solid fa-house"></i> Dashboard</a>
-        <a href="classes.html" class="active"><i class="fa-solid fa-book"></i> Classes</a>
-        <a href="students.html"><i class="fa-solid fa-user-graduate"></i> Students</a>
-        <a href="teachers.html"><i class="fa-solid fa-chalkboard-user"></i> Teachers</a>
-        <a href="academic-periods.html"><i class="fa-solid fa-calendar-days"></i> Academic Periods</a>
-        <a href="answer-sheet-maker.html"><i class="fa-solid fa-file-lines"></i> Answer Sheet Maker</a>
-        <a href="settings.html"><i class="fa-solid fa-gear"></i> Settings</a>
+        <div class="nav-section">
+          <div class="nav-section-title">Main</div>
+        </div>
+        
+        <div class="nav-item">
+          <a href="dashboard.html" class="nav-link" data-tooltip="Dashboard">
+            <div class="nav-icon">
+              <i class="fa-solid fa-house"></i>
+            </div>
+            <span class="nav-text">Dashboard</span>
+          </a>
+        </div>
+        
+        <div class="nav-item">
+          <a href="analytics.html" class="nav-link" data-tooltip="Analytics">
+            <div class="nav-icon">
+              <i class="fa-solid fa-chart-line"></i>
+            </div>
+            <span class="nav-text">Analytics</span>
+          </a>
+        </div>
+        
+        <div class="nav-section">
+          <div class="nav-section-title">Management</div>
+        </div>
+        
+        <div class="nav-item">
+          <a href="students.html" class="nav-link" data-tooltip="Students">
+            <div class="nav-icon">
+              <i class="fa-solid fa-user-graduate"></i>
+            </div>
+            <span class="nav-text">Students</span>
+          </a>
+        </div>
+        
+        <div class="nav-item">
+          <a href="teachers.html" class="nav-link" id="teachers-nav" data-tooltip="Teachers">
+            <div class="nav-icon">
+              <i class="fa-solid fa-chalkboard-user"></i>
+            </div>
+            <span class="nav-text">Teachers</span>
+          </a>
+        </div>
+        
+        <div class="nav-item">
+          <a href="classes.html" class="nav-link active" data-tooltip="Classes">
+            <div class="nav-icon">
+              <i class="fa-solid fa-book"></i>
+            </div>
+            <span class="nav-text">Classes</span>
+          </a>
+        </div>
+        
+        <div class="nav-item">
+          <a href="academic-periods.html" class="nav-link" id="academic-periods-nav" data-tooltip="Academic Periods">
+            <div class="nav-icon">
+              <i class="fa-solid fa-calendar-days"></i>
+            </div>
+            <span class="nav-text">Academic Periods</span>
+          </a>
+        </div>
+        
+        <div class="nav-section">
+          <div class="nav-section-title">Tools</div>
+        </div>
+        
+        <div class="nav-item">
+          <a href="answer-sheet-maker.html" class="nav-link" data-tooltip="Answer Sheet Maker">
+            <div class="nav-icon">
+              <i class="fa-solid fa-file-lines"></i>
+            </div>
+            <span class="nav-text">Answer Sheet Maker</span>
+          </a>
+        </div>
+        
+        <div class="nav-section">
+          <div class="nav-section-title">System</div>
+        </div>
+        
+        <div class="nav-item">
+          <a href="settings.html" class="nav-link" data-tooltip="Settings">
+            <div class="nav-icon">
+              <i class="fa-solid fa-gear"></i>
+            </div>
+            <span class="nav-text">Settings</span>
+          </a>
+        </div>
       </nav>
     </aside>
 
-    <!-- Main -->
+    <!-- Main Content -->
     <div class="main-area">
-      <header class="topbar" style="display:flex; justify-content:space-between; align-items:center;">
-        <div class="brand"><h3>Classes</h3></div>
-        <div class="top-actions" style="position: relative;">
-          <div class="user" style="position: relative;">
-            <button id="userIconBtn" class="user-btn">
-              <img id="userAvatar" src="https://static.vecteezy.com/system/resources/previews/000/550/731/original/user-icon-vector.jpg" alt="User avatar" />
+      <!-- Header with user info -->
+      <header class="header">
+        <div class="header-left">
+          <div class="header-navigation">
+            <button class="nav-btn" onclick="history.back()" title="Go Back">
+              <i class="fa-solid fa-arrow-left"></i>
+            </button>
+            <button class="nav-btn" onclick="window.location.href='dashboard.html'" title="Dashboard">
+              <i class="fa-solid fa-house"></i>
+            </button>
+          </div>
+          <div class="header-title">
+            <h1>Classes</h1>
+            <p>Manage classes and subject assignments</p>
+          </div>
+        </div>
+        
+        <div class="user-section">
+          <div class="user-profile">
+            <button id="userIconBtn" class="user-profile-btn">
+              <div class="user-avatar">
+                <i class="fa-solid fa-user"></i>
+              </div>
+              <div class="user-info">
+                <span class="user-name" id="userNameDisplay">Loading...</span>
+                <span class="user-role-badge" id="userRoleBadge">User</span>
+              </div>
+              <i class="fa-solid fa-chevron-down dropdown-arrow"></i>
             </button>
             <div id="userDropdown" class="user-dropdown">
-              <div id="user-name">User Name</div>
-              <div id="user-email"></div>
-              <div id="user-role" style="font-style: italic; color: #666;">Role: Loading...</div>
-              <div class="divider"></div>
-              <button id="signOutBtn" style="width: 100%; padding: 8px; cursor: pointer;">Log out</button>
+              <div class="dropdown-header">
+                <div class="dropdown-avatar">
+                  <i class="fa-solid fa-user"></i>
+                </div>
+                <div class="dropdown-user-info">
+                  <div class="dropdown-name" id="user-name">User Name</div>
+                  <div class="dropdown-email" id="user-email">user@example.com</div>
+                  <div class="dropdown-role" id="user-role">Role: Loading...</div>
+                </div>
+              </div>
+              <div class="dropdown-divider"></div>
+              <div class="dropdown-menu">
+                <button class="dropdown-item" id="profileBtn">
+                  <i class="fa-solid fa-user-circle"></i>
+                  <span>Profile</span>
+                </button>
+                <button class="dropdown-item" id="settingsBtn">
+                  <i class="fa-solid fa-cog"></i>
+                  <span>Settings</span>
+                </button>
+                <div class="dropdown-divider"></div>
+                <button class="dropdown-item danger" id="signOutBtn">
+                  <i class="fa-solid fa-sign-out-alt"></i>
+                  <span>Sign Out</span>
+                </button>
+              </div>
             </div>
           </div>
         </div>
       </header>
 
-      <main class="main-content" style="margin-top: 20px;">
-        <div style="display: flex; gap: 30px;">
-          <!-- Left: Create Class + Class List -->
-          <div style="display: flex; gap: 20px; flex-wrap: nowrap; width: 600px; flex-shrink: 0;">
-            <!-- Create Class -->
-            <section id="createClassSection" style="flex: 1 1 280px; padding: 15px; border: 1px solid #ccc; border-radius: 6px; background: #f9f9f9;">
-              <h3>Create New Class</h3>
-              <form id="createClassForm" style="display: flex; flex-direction: column;">
-                <input type="text" id="classIdInput" placeholder="Class ID (e.g. BSCPE-3A)" required style="padding: 8px; margin-bottom: 10px;" />
-                
-                <label for="academicYearSelect">Assign Academic Year</label>
-                <select id="academicYearSelect" style="padding: 8px; margin-bottom: 10px;">
+      <div class="content-layout">
+        <!-- Left Column: Create Class Form -->
+        <div class="card" id="createClassSection">
+          <div class="card-header">
+            <div class="form-icon">
+              <i class="fa-solid fa-plus"></i>
+            </div>
+            <div class="card-header-left">
+              <h3 class="card-title">Create New Class</h3>
+              <p class="card-subtitle">Create new class records</p>
+            </div>
+          </div>
+          <div class="card-content">
+          
+          <form id="createClassForm">
+            <div class="form-group">
+              <label for="classIdInput">
+                <i class="fa-solid fa-id-card"></i>
+                Class ID
+              </label>
+              <div class="input-wrapper">
+                <i class="fa-solid fa-id-card"></i>
+                <input type="text" id="classIdInput" placeholder="e.g., BSCPE-3A" required />
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label for="academicYearSelect">
+                <i class="fa-solid fa-calendar-days"></i>
+                Academic Year
+              </label>
+              <div class="input-wrapper">
+                <i class="fa-solid fa-calendar-days"></i>
+                <select id="academicYearSelect" required>
                   <option value="">Select Academic Year</option>
                 </select>
-                  <button type="submit" style="padding: 8px; background: #2d3e50; color: white; border: none; border-radius: 4px; cursor: pointer;">Create Class</button>
-              </form>
-            </section>
+              </div>
+            </div>
 
-            <!-- Class List -->
-            <section style="flex: 1 1 280px; padding: 15px; border: 1px solid #ccc; border-radius: 6px; background: #f9f9f9;">
-              <div class="card-header"><h3>Class List</h3></div>
-              <div id="suggestedList"><p class="muted">Loading classes...</p></div>
-              <div id="suggested-count" class="muted" style="margin-top: 10px;"></div>
-            </section>
-          </div>
-
-          <!-- Right: Subjects + Add Subject -->
-          <div style="flex: 1; display: flex; flex-direction: column; gap: 20px; max-width: 700px;">
-            <section id="subjectsGrid" class="class-grid" aria-live="polite" aria-label="Subjects for selected class" style="min-height: 200px; border: 1px solid #ccc; border-radius: 6px; padding: 15px; background: #f9f9f9;">
-              <p class="muted">Select a class to view its subjects.</p>
-            </section>
-
-            <section id="addSubjectFormSection" style="display:none; padding: 15px; border: 1px solid #ccc; border-radius: 6px; background: #f9f9f9;">
-              <h3>Add New Subject to <span id="selectedClassName"></span></h3>
-              <form id="addSubjectForm" style="display: flex; flex-direction: column; max-width: 300px;">
-                <input type="hidden" id="selectedClassId" />
-                <input type="text" id="subjectIdInput" placeholder="Subject ID" required style="padding: 8px; margin-bottom: 10px;" />
-                <input type="text" id="subjectNameInput" placeholder="Subject Name" required style="padding: 8px; margin-bottom: 10px;" />
-                <label for="teacherSelect">Assign Teacher:</label>
-                <select id="teacherSelect" style="margin-bottom: 10px;">
-                  <option value="">-- Select Existing Teacher --</option>
-                </select>
-                <p>Or add new teacher:</p>
-                <input type="text" id="newTeacherName" placeholder="New teacher's name" style="margin-bottom: 8px;" />
-                <input type="email" id="newTeacherEmail" placeholder="New teacher's email" style="margin-bottom: 12px;" />
-                <button type="submit" style="padding: 8px; background: #2d3e50; color: white; border: none; border-radius: 4px; cursor: pointer;">Add Subject</button>
-              </form>
-            </section>
+            <button type="submit" class="btn btn-primary">
+              <i class="fa-solid fa-save"></i> Create Class
+            </button>
+          </form>
           </div>
         </div>
-      </main>
+
+        <!-- Right Column: Classes Grid and Subjects -->
+        <div class="card">
+          <div class="card-header">
+            <div class="card-header-left">
+              <h3 class="card-title"><i class="fa-solid fa-list"></i> Classes</h3>
+              <p class="card-subtitle">View and manage all classes</p>
+            </div>
+          </div>
+          <div class="card-content">
+          <div id="classesGrid" class="classes-grid">
+            <div class="empty-state">
+              <i class="fa-solid fa-graduation-cap"></i>
+              <h3>No Classes Found</h3>
+              <p>Create your first class using the form on the left to get started</p>
+            </div>
+          </div>
+
+          <!-- Subjects Section -->
+          <div class="subjects-section" id="subjectsSection" style="display: none;">
+            <div class="grid-header">
+              <h3><i class="fa-solid fa-graduation-cap"></i> Subjects for <span id="selectedClassName"></span></h3>
+              <button class="btn btn-secondary" id="addSubjectBtn">
+                <i class="fa-solid fa-plus"></i> Add Subject
+              </button>
+            </div>
+            
+            <div id="subjectsGrid" class="subjects-grid">
+              <!-- Subjects will be loaded here -->
+            </div>
+          </div>
+
+          <!-- Add Subject Form -->
+          <div class="add-subject-form" id="addSubjectForm">
+            <h3><i class="fa-solid fa-plus"></i> Add Subject to <span id="addSubjectClassName"></span></h3>
+            
+            <form id="subjectForm">
+              <input type="hidden" id="selectedClassId" />
+              
+              <div class="form-group">
+                <label for="subjectIdInput">
+                  <i class="fa-solid fa-hashtag"></i>
+                  Subject ID
+                </label>
+                <div class="input-wrapper">
+                  <i class="fa-solid fa-hashtag"></i>
+                  <input type="text" id="subjectIdInput" placeholder="e.g., CS101" required />
+                </div>
+              </div>
+
+              <div class="form-group">
+                <label for="subjectNameInput">
+                  <i class="fa-solid fa-book-open"></i>
+                  Subject Name
+                </label>
+                <div class="input-wrapper">
+                  <i class="fa-solid fa-book-open"></i>
+                  <input type="text" id="subjectNameInput" placeholder="e.g., Computer Science Fundamentals" required />
+                </div>
+              </div>
+
+              <div class="section-divider">
+                <h4><i class="fa-solid fa-chalkboard-user"></i> Teacher Assignment</h4>
+                
+                <div class="form-group">
+                  <label for="teacherSelect">
+                    <i class="fa-solid fa-chalkboard-user"></i>
+                    Existing Teacher
+                  </label>
+                  <div class="input-wrapper">
+                    <i class="fa-solid fa-chalkboard-user"></i>
+                    <select id="teacherSelect">
+                      <option value="">Select a teacher (optional)</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div class="form-group">
+                  <label for="newTeacherName">
+                    <i class="fa-solid fa-user-plus"></i>
+                    Or Add New Teacher
+                  </label>
+                  <div class="input-wrapper">
+                    <i class="fa-solid fa-user-plus"></i>
+                    <input type="text" id="newTeacherName" placeholder="Teacher's full name" />
+                  </div>
+                </div>
+
+                <div class="form-group">
+                  <label for="newTeacherEmail">
+                    <i class="fa-solid fa-envelope"></i>
+                    Teacher's Email
+                  </label>
+                  <div class="input-wrapper">
+                    <i class="fa-solid fa-envelope"></i>
+                    <input type="email" id="newTeacherEmail" placeholder="teacher@example.com" />
+                  </div>
+                </div>
+              </div>
+
+              <div style="display: flex; gap: 10px; margin-top: 25px;">
+                <button type="submit" class="btn btn-primary">
+                  <i class="fa-solid fa-save"></i> Add Subject
+                </button>
+                <button type="button" class="btn btn-secondary" id="cancelAddSubject">
+                  <i class="fa-solid fa-times"></i> Cancel
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
     </div>
   </div>
 
-  <!-- Load module that handles everything else (teachers, classes, academic years) -->
+  <!-- Scripts -->
+  <script>
+    // Apply immediate restrictions for teachers before page fully loads
+    // This prevents the flash of restricted content
+    (function() {
+      // Check if user is likely a teacher (this is a quick check, full verification happens later)
+      const userEmail = localStorage.getItem('userEmail');
+      const userRole = localStorage.getItem('userRole');
+      
+      if (userRole === 'teacher') {
+        // Apply immediate CSS restrictions
+        const style = document.createElement('style');
+        style.id = 'immediate-teacher-restrictions';
+        style.textContent = `
+          /* Hide teacher-restricted elements immediately */
+          #createClassSection,
+          a[href*="teachers.html"],
+          a[href*="academic-periods.html"],
+          #teacherSelect,
+          label[for="teacherSelect"],
+          #newTeacherName,
+          #newTeacherEmail,
+          .section-divider {
+            display: none !important;
+          }
+          
+          /* Apply teacher layout immediately */
+          .content-layout {
+            grid-template-columns: 1fr !important;
+            max-width: 1200px !important;
+            margin: 0 auto !important;
+          }
+        `;
+        document.head.appendChild(style);
+      }
+    })();
+  </script>
+  <script src="js/mobile-menu.js"></script>
+  <script src="js/user-profile.js"></script>
+  <script type="module">
+    // Import Firebase modules for user-profile.js to work properly
+    import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js';
+    import { 
+      getFirestore, collection, getDocs, query, where
+    } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js';
+    import { 
+      getAuth, onAuthStateChanged, signOut 
+    } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js';
+
+    // Firebase Config
+    const firebaseConfig = {
+      apiKey: "AIzaSyAznHzrOLmLvI98_0P649Tx5TZEwXaNNBs",
+      authDomain: "rosec-57d1d.firebaseapp.com",
+      projectId: "rosec-57d1d",
+      storageBucket: "rosec-57d1d.appspot.com",
+      messagingSenderId: "994663054798",
+      appId: "1:994663054798:web:6214585d90b6fcc583bf9f",
+      measurementId: "G-LM6RHY4WTZ"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+    const auth = getAuth(app);
+
+    // Make Firebase functions globally available for user-profile.js
+    window.getAuth = getAuth;
+    window.getFirestore = getFirestore;
+    window.onAuthStateChanged = onAuthStateChanged;
+    window.signOut = signOut;
+    window.collection = collection;
+    window.getDocs = getDocs;
+    window.query = query;
+    window.where = where;
+  </script>
+  <script type="module" src="js/sidebar-toggle.js"></script>
+  <script type="module" src="js/theme-manager.js"></script>
   <script type="module" src="js/classes.js"></script>
 </body>
 </html>

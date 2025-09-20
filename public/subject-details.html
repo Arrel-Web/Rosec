@@ -6,19 +6,62 @@
   <title>Student Grades by Academic Period</title>
   <link rel="stylesheet" href="styles.css" />
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" />
+  <link rel="stylesheet" href="css/user-profile.css" />
+  <link rel="stylesheet" href="css/enhanced-topbar.css">
   <style>
     .main-area {
       padding: 20px;
       min-height: 100vh;
       background: linear-gradient(180deg,#fafafa,#f1f3f4);
+      display: block !important;
+      flex: none !important;
     }
-    .container { max-width: 1200px; margin: 0 auto; }
+    
+    /* Student action button hover effects - matching export/import style */
+    #addExistingStudentBtn:hover {
+      background: #d32f2f !important;
+    }
+    
+    #showMultiSelectBtn:hover {
+      background: #2e7d32 !important;
+    }
+    
+    #showNewStudentBtn:hover {
+      background: #1557b0 !important;
+    }
+    
+    #selectStudent:focus {
+      outline: none;
+      border-color: #1a73e8;
+      box-shadow: 0 0 0 2px rgba(26,115,232,0.25);
+    }
+    .container { 
+      width: 1200px; 
+      max-width: 1200px; 
+      margin: 0 auto; 
+      padding: 0;
+      box-sizing: border-box;
+    }
+    
+    .header {
+      width: 1200px !important;
+      max-width: 1200px !important;
+      margin: 0 auto !important;
+      box-sizing: border-box !important;
+      padding-left: 0 !important;
+      padding-right: 0 !important;
+    }
+    
     .card { 
       background: white; 
       border-radius: 12px; 
       box-shadow: 0 2px 8px rgba(0,0,0,0.1); 
       margin-bottom: 20px; 
       border: 1px solid #e8eaed;
+      width: 100%;
+      box-sizing: border-box;
+      margin-left: 0 !important;
+      margin-right: 0 !important;
     }
     .topbar {
       display: flex;
@@ -193,31 +236,68 @@
 </head>
 <body>
   <div class="main-area">
-    <div class="container">
-      <header class="topbar">
-        <div>
-          <h1>Student Grades</h1>
-          <div class="meta">View grades per class/subject and academic period.</div>
+    <header class="header">
+        <div class="header-left">
+          <div class="header-navigation">
+            <button class="nav-btn" onclick="history.back()" title="Go Back">
+              <i class="fa-solid fa-arrow-left"></i>
+            </button>
+            <button class="nav-btn" onclick="window.location.href='dashboard.html'" title="Dashboard">
+              <i class="fa-solid fa-house"></i>
+            </button>
+          </div>
+          <div class="header-title">
+            <h1>Student Grades</h1>
+            <p>View student grades and performance</p>
+          </div>
         </div>
-        <div class="top-actions">
-          <button onclick="history.back()" style="background: #f8f9fa; color: #5f6368; border: 1px solid #dadce0; padding: 8px 12px; border-radius: 8px; cursor: pointer; margin-right: 8px; font-size: 14px;"><i class="fa-solid fa-arrow-left"></i></button>
-          <button onclick="window.location.href='dashboard.html'" style="background: #f8f9fa; color: #5f6368; border: 1px solid #dadce0; padding: 8px 12px; border-radius: 8px; cursor: pointer; margin-right: 12px; font-size: 14px;"><i class="fa-solid fa-house"></i></button>
-          <div class="user">
-            <button id="userIconBtn" class="user-btn">
-              <img id="userAvatar" src="https://static.vecteezy.com/system/resources/previews/000/550/731/original/user-icon-vector.jpg" alt="User avatar" />
+        
+        <div class="user-section">
+          <div class="user-profile">
+            <button id="userIconBtn" class="user-profile-btn">
+              <div class="user-avatar">
+                <i class="fa-solid fa-user"></i>
+              </div>
+              <div class="user-info">
+                <span class="user-name" id="userNameDisplay">Loading...</span>
+                <span class="user-role-badge" id="userRoleBadge">User</span>
+              </div>
+              <i class="fa-solid fa-chevron-down dropdown-arrow"></i>
             </button>
             <div id="userDropdown" class="user-dropdown">
-              <div id="user-name">User Name</div>
-              <div id="user-email"></div>
-              <div id="user-role" style="font-style: italic; color: #666;">Role: Loading...</div>
-              <div class="divider"></div>
-              <button id="signOutBtn" style="width: 100%; padding: 8px; cursor: pointer;">Log out</button>
+              <div class="dropdown-header">
+                <div class="dropdown-avatar">
+                  <i class="fa-solid fa-user"></i>
+                </div>
+                <div class="dropdown-user-info">
+                  <div class="dropdown-name" id="user-name">User Name</div>
+                  <div class="dropdown-email" id="user-email">user@example.com</div>
+                  <div class="dropdown-role" id="user-role">Role: Loading...</div>
+                </div>
+              </div>
+              <div class="dropdown-divider"></div>
+              <div class="dropdown-menu">
+                <button class="dropdown-item" id="profileBtn">
+                  <i class="fa-solid fa-user-circle"></i>
+                  <span>Profile</span>
+                </button>
+                <button class="dropdown-item" id="settingsBtn">
+                  <i class="fa-solid fa-cog"></i>
+                  <span>Settings</span>
+                </button>
+                <div class="dropdown-divider"></div>
+                <button class="dropdown-item danger" id="signOutBtn">
+                  <i class="fa-solid fa-sign-out-alt"></i>
+                  <span>Sign Out</span>
+                </button>
+              </div>
             </div>
           </div>
         </div>
       </header>
 
-    <!-- Filters Card -->
+    <div class="container">
+      <!-- Filters Card -->
     <div class="card">
       <form id="filters" class="controls">
         <div class="field">
@@ -245,14 +325,68 @@
           <input id="schoolYear" name="schoolYear" readonly />
         </div>
       </form>
-      <div style="display:flex; gap:8px; padding:12px 16px 16px 16px;">
+      <div style="display:flex; gap:8px; padding:20px; border-top: 1px solid #e8eaed;">
+        <select id="selectStudent" style="padding: 12px; border: 1px solid #dadce0; border-radius: 8px; font-size: 14px; transition: border-color 0.2s ease; font-family: inherit; background: white;">
+          <option value="">Select existing student...</option>
+        </select>
+        <button id="addExistingStudentBtn" type="button" style="background: #ea4335; color: white; padding: 12px; border: 1px solid #dadce0; border-radius: 8px; font-size: 14px; transition: background 0.2s ease; font-family: inherit; cursor: pointer; font-weight: 600;">Add Student</button>
+        <button id="showMultiSelectBtn" type="button" style="background: #34a853; color: white; padding: 12px; border: 1px solid #dadce0; border-radius: 8px; font-size: 14px; transition: background 0.2s ease; font-family: inherit; cursor: pointer; font-weight: 600;">Add Multiple</button>
+        <button id="showNewStudentBtn" type="button" style="background: #1a73e8; color: white; padding: 12px; border: 1px solid #dadce0; border-radius: 8px; font-size: 14px; transition: background 0.2s ease; font-family: inherit; cursor: pointer; font-weight: 600;">Add New</button>
         <button id="exportBtn" type="button" title="Download as CSV">Export CSV</button>
+        <button id="importBtn" type="button" title="Import from CSV" style="background: #34a853;">Import CSV</button>
         <span id="hint" class="label" style="align-self:center"></span>
       </div>
+        
+        <!-- Bulk Add Modal Container (initially hidden) -->
+        <div id="bulkAddModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; align-items: center; justify-content: center;">
+          <div style="background: white; border-radius: 8px; padding: 20px; max-width: 600px; width: 90%; max-height: 80vh; overflow-y: auto;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+              <h3 style="margin: 0; color: #202124; font-size: 18px; font-weight: 600;">Add Multiple Students</h3>
+              <button id="closeBulkModal" style="background: none; border: none; font-size: 20px; cursor: pointer; color: #5f6368;">&times;</button>
+            </div>
+            
+            <div class="bulk-table-container">
+              <table id="bulkStudentTable" style="width: 100%; border-collapse: collapse; border: 1px solid #dadce0;">
+                <thead>
+                  <tr style="background: #f8f9fa;">
+                    <th style="padding: 10px; border: 1px solid #dadce0; text-align: left; font-size: 12px;">Student ID</th>
+                    <th style="padding: 10px; border: 1px solid #dadce0; text-align: left; font-size: 12px;">Student Name</th>
+                    <th style="padding: 10px; border: 1px solid #dadce0; text-align: center; font-size: 12px; width: 60px;">Remove</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td style="padding: 8px; border: 1px solid #dadce0;"><input type="text" class="studentIdInput" style="width: 100%; padding: 6px; border: 1px solid #dadce0; border-radius: 3px; font-size: 12px;" required></td>
+                    <td style="padding: 8px; border: 1px solid #dadce0;"><input type="text" class="nameInput" style="width: 100%; padding: 6px; border: 1px solid #dadce0; border-radius: 3px; font-size: 12px;" required></td>
+                    <td style="padding: 8px; border: 1px solid #dadce0; text-align: center;"><button type="button" class="removeRowBtn" style="background: #ea4335; color: white; border: none; border-radius: 3px; padding: 4px 8px; cursor: pointer; font-size: 11px;">✕</button></td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+            
+            <div style="margin-top: 15px; display: flex; gap: 10px; align-items: center;">
+              <button id="addRowBtn" type="button" style="background: #1a73e8; color: white; border: none; padding: 8px 16px; border-radius: 4px; font-size: 12px; cursor: pointer;">Add Row</button>
+              <button id="saveAllStudentsBtn" type="button" style="background: #34a853; color: white; border: none; padding: 8px 16px; border-radius: 4px; font-size: 12px; cursor: pointer;">Save All Students</button>
+              <div id="bulkFormMessage" style="margin-left: 10px; font-size: 12px;"></div>
+            </div>
+          </div>
+        </div>
+        
+        <!-- New Student Form (initially hidden) -->
+        <div id="newStudentForm" style="display: none; margin-top: 10px; padding: 10px; border: 1px solid #dadce0; border-radius: 6px; background: white; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+          <div style="display: flex; gap: 6px; align-items: center;">
+            <input type="text" id="newStudentId" placeholder="Student ID" style="flex: 1; padding: 6px 10px; border: 1px solid #dadce0; border-radius: 4px; font-size: 12px;" />
+            <input type="text" id="newStudentName" placeholder="Student Name" style="flex: 2; padding: 6px 10px; border: 1px solid #dadce0; border-radius: 4px; font-size: 12px;" />
+            <button id="addNewStudentBtn" type="button" style="background: #34a853; color: white; border: none; padding: 6px 12px; border-radius: 4px; font-size: 12px; cursor: pointer; white-space: nowrap;">Add</button>
+            <button id="cancelNewStudentBtn" type="button" style="background: #5f6368; color: white; border: none; padding: 6px 10px; border-radius: 4px; font-size: 12px; cursor: pointer;">Cancel</button>
+          </div>
+        </div>
+      </div>
+      
       <div id="summary" class="summary"></div>
     </div>
 
-    <!-- Student Table Card -->
+      <!-- Student Table Card -->
     <div class="card">
       <div style="padding: 20px; border-bottom: 1px solid #e8eaed;">
         <div style="font-weight: 600; color: #202124;">Assigned Teacher: <span id="assignedTeacher">Loading…</span></div>
@@ -274,27 +408,46 @@
         <small id="count">0 students</small>
       </div>
     </div>
-
-    <!-- Add Students Controls -->
-    <div class="card" style="padding: 20px;">
-      <h3 style="margin: 0 0 20px 0; color: #202124; font-size: 18px; font-weight: 600;">Add Students</h3>
-      <div style="display: flex; flex-direction: column; gap: 16px;">
-        <div style="display: flex; gap: 12px; align-items: center;">
-          <select id="selectStudent" style="flex: 1;">
-            <option value="">--Select Existing Student--</option>
-          </select>
-          <button id="addExistingStudentBtn" type="button">Add Existing Student</button>
-        </div>
-        <div style="display: flex; gap: 12px; align-items: center;">
-          <input type="text" id="newStudentId" placeholder="Enter Student ID" style="flex: 1;" />
-          <input type="text" id="newStudentName" placeholder="Enter Student Name" style="flex: 1;" />
-          <button id="addNewStudentBtn" type="button">Add New Student</button>
-        </div>
-      </div>
-    </div>
     </div>
   </div>
 
+  <script src="js/user-profile.js"></script>
+  <script type="module">
+    // Import Firebase modules for user-profile.js to work properly
+    import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js';
+    import { 
+      getFirestore, collection, getDocs, query, where
+    } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js';
+    import { 
+      getAuth, onAuthStateChanged, signOut 
+    } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js';
+
+    // Firebase Config
+    const firebaseConfig = {
+      apiKey: "AIzaSyAznHzrOLmLvI98_0P649Tx5TZEwXaNNBs",
+      authDomain: "rosec-57d1d.firebaseapp.com",
+      projectId: "rosec-57d1d",
+      storageBucket: "rosec-57d1d.appspot.com",
+      messagingSenderId: "994663054798",
+      appId: "1:994663054798:web:6214585d90b6fcc583bf9f",
+      measurementId: "G-LM6RHY4WTZ"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+    const auth = getAuth(app);
+
+    // Make Firebase functions globally available for user-profile.js
+    window.getAuth = getAuth;
+    window.getFirestore = getFirestore;
+    window.onAuthStateChanged = onAuthStateChanged;
+    window.signOut = signOut;
+    window.collection = collection;
+    window.getDocs = getDocs;
+    window.query = query;
+    window.where = where;
+  </script>
+  <script type="module" src="js/theme-manager.js"></script>
   <script type="module" src="js/subjectstudent.js"></script>
 </body>
 </html>

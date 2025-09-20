@@ -1,0 +1,33 @@
+User-agent: *
+Allow: /
+
+# Sitemap location
+Sitemap: https://rosec-57d1d.web.app/sitemap.xml
+
+# Allow all search engines to crawl the site
+User-agent: Googlebot
+Allow: /
+
+User-agent: Bingbot
+Allow: /
+
+User-agent: Slurp
+Allow: /
+
+# Allow crawling of important files
+Allow: /sitemap.xml
+Allow: /robots.txt
+
+# Allow crawling of important pages
+Allow: /dashboard.html
+Allow: /answer-sheet-maker.html
+Allow: /students.html
+Allow: /teachers.html
+Allow: /classes.html
+Allow: /academic-periods.html
+Allow: /exam-details.html
+Allow: /subject-details.html
+
+# Disallow crawling of admin or sensitive areas (if any)
+Disallow: /admin/
+Disallow: /private/

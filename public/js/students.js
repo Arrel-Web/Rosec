@@ -5,6 +5,7 @@ import {
 import { 
   getAuth, onAuthStateChanged, signOut 
 } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js';
+import { getUserRole, applySidebarRestrictions, applyPageRestrictions } from './role-manager.js';
 
 // Firebase config
 const firebaseConfig = {
@@ -36,6 +37,20 @@ document.addEventListener('DOMContentLoaded', () => {
   const modalContent = document.getElementById('modalContent');
   const closeModalBtn = document.getElementById('closeModal');
 
+  // Search elements
+  const searchInput = document.getElementById('searchInput');
+  const clearSearchBtn = document.getElementById('clearSearchBtn');
+
+  // Bulk actions elements
+  const selectAllCheckbox = document.getElementById('selectAll');
+  const bulkActionsBar = document.getElementById('bulkActionsBar');
+  const selectedCount = document.getElementById('selectedCount');
+  const bulkDeleteBtn = document.getElementById('bulkDeleteBtn');
+  const cancelSelectionBtn = document.getElementById('cancelSelectionBtn');
+
+  // Store all students data for filtering
+  let allStudentsData = [];
+
   // ===== USER DROPDOWN =====
   if (userIconBtn && userDropdown) {
     userIconBtn.addEventListener('click', e => {
@@ -46,25 +61,16 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   // ===== AUTH LISTENER =====
-  async function getUserRole(email) {
-    try {
-      const usersCol = collection(db, 'users');
-      const q = query(usersCol, where('email', '==', email));
-      const querySnapshot = await getDocs(q);
-      if (querySnapshot.empty) return null;
-      return querySnapshot.docs[0].data().role || null;
-    } catch (err) {
-      console.error('Error getting user role:', err);
-      return null;
-    }
-  }
-
   onAuthStateChanged(auth, async (user) => {
     if (user) {
       if (userNameEl) userNameEl.textContent = user.displayName || 'User Name:';
       if (userEmailEl) userEmailEl.textContent = user.email;
-      const role = await getUserRole(user.email);
+      const role = await getUserRole(user.email, db);
       if (userRoleEl) userRoleEl.textContent = `Role: ${role || 'N/A'}`;
+      
+      // Apply role-based restrictions
+      applySidebarRestrictions(role);
+      applyPageRestrictions(role, 'students');
     } else {
       if (userNameEl) userNameEl.textContent = 'User Name';
       if (userEmailEl) userEmailEl.textContent = 'user@example.com';
@@ -87,50 +93,137 @@ document.addEventListener('DOMContentLoaded', () => {
   // ===== STUDENTS LOGIC =====
   async function loadStudents() {
     if (!studentsTableBody) return;
-    studentsTableBody.innerHTML = '';
+    studentsTableBody.innerHTML = '<tr><td colspan="3" style="text-align:center; color:#666;">Loading students...</td></tr>';
 
     try {
       const studentsSnapshot = await getDocs(collection(db, 'students'));
-      if (studentsSnapshot.empty) {
+      
+      // Store all students data for searching
+      allStudentsData = [];
+      studentsSnapshot.forEach(docSnap => {
+        const data = docSnap.data();
+        allStudentsData.push({
+          id: docSnap.id,
+          studentId: data.studentId || 'N/A',
+          name: data.name || 'Unnamed'
+        });
+      });
+
+      if (allStudentsData.length === 0) {
         studentsTableBody.innerHTML = `<tr><td colspan="3" style="text-align:center; color:#666;">No students found.</td></tr>`;
         return;
       }
 
-      studentsSnapshot.forEach(docSnap => {
-        const data = docSnap.data();
-        const row = document.createElement('tr');
-
-        const idCell = document.createElement('td');
-        idCell.textContent = data.studentId || 'N/A';
-        const nameCell = document.createElement('td');
-        nameCell.textContent = data.name || 'Unnamed';
-        row.appendChild(idCell);
-        row.appendChild(nameCell);
-
-        const actionCell = document.createElement('td');
-        const deleteBtn = document.createElement('button');
-        deleteBtn.textContent = 'Delete';
-        deleteBtn.classList.add('delete-btn');
-        deleteBtn.addEventListener('click', async () => {
-          if (confirm(`Are you sure you want to delete student ${data.name}?`)) {
-            try {
-              await deleteDoc(doc(db, 'students', docSnap.id));
-              row.remove();
-            } catch (err) {
-              console.error('Error deleting student:', err);
-              alert('Failed to delete student.');
-            }
-          }
-        });
-        actionCell.appendChild(deleteBtn);
-        row.appendChild(actionCell);
-
-        studentsTableBody.appendChild(row);
-      });
+      // Render all students initially
+      renderStudents(allStudentsData);
     } catch (error) {
       console.error('Error loading students:', error);
       studentsTableBody.innerHTML = `<tr><td colspan="3" style="text-align:center; color:red;">Failed to load students.</td></tr>`;
     }
+  }
+
+  function renderStudents(studentsToRender) {
+    if (!studentsTableBody) return;
+    studentsTableBody.innerHTML = '';
+
+    if (studentsToRender.length === 0) {
+      studentsTableBody.innerHTML = `<tr><td colspan="4" style="text-align:center; color:#666;">No students match your search.</td></tr>`;
+      return;
+    }
+
+    studentsToRender.forEach(studentData => {
+      const row = document.createElement('tr');
+
+      // Checkbox cell
+      const checkboxCell = document.createElement('td');
+      checkboxCell.style.textAlign = 'center';
+      const checkbox = document.createElement('input');
+      checkbox.type = 'checkbox';
+      checkbox.className = 'student-checkbox';
+      checkbox.dataset.studentId = studentData.id;
+      checkbox.addEventListener('change', updateBulkActionsBar);
+      checkboxCell.appendChild(checkbox);
+      row.appendChild(checkboxCell);
+
+      // Student ID cell
+      const idCell = document.createElement('td');
+      idCell.textContent = studentData.studentId;
+      row.appendChild(idCell);
+
+      // Name cell
+      const nameCell = document.createElement('td');
+      nameCell.textContent = studentData.name;
+      row.appendChild(nameCell);
+
+      // Actions cell
+      const actionCell = document.createElement('td');
+      const deleteBtn = document.createElement('button');
+      deleteBtn.textContent = 'Delete';
+      deleteBtn.classList.add('delete-btn');
+      deleteBtn.style.cssText = 'background: #dc3545; color: white; border: none; padding: 4px 8px; border-radius: 4px; cursor: pointer; font-size: 12px;';
+      deleteBtn.addEventListener('click', async () => {
+        if (confirm(`Are you sure you want to delete student ${studentData.name}?`)) {
+          try {
+            await deleteDoc(doc(db, 'students', studentData.id));
+            // Remove from allStudentsData and re-render
+            allStudentsData = allStudentsData.filter(s => s.id !== studentData.id);
+            performSearch(); // Re-apply current search
+            updateBulkActionsBar(); // Update bulk actions bar
+          } catch (err) {
+            console.error('Error deleting student:', err);
+            alert('Failed to delete student.');
+          }
+        }
+      });
+      actionCell.appendChild(deleteBtn);
+      row.appendChild(actionCell);
+
+      studentsTableBody.appendChild(row);
+    });
+
+    setupSelectAll();
+  }
+
+  // ===== SEARCH FUNCTIONALITY =====
+  function performSearch() {
+    const searchTerm = searchInput.value.trim().toLowerCase();
+    
+    if (!searchTerm) {
+      renderStudents(allStudentsData);
+      clearSearchBtn.style.display = 'none';
+      return;
+    }
+
+    clearSearchBtn.style.display = 'block';
+
+    const filteredStudents = allStudentsData.filter(student => {
+      const studentId = student.studentId.toLowerCase();
+      const name = student.name.toLowerCase();
+      return studentId.includes(searchTerm) || name.includes(searchTerm);
+    });
+
+    renderStudents(filteredStudents);
+  }
+
+  function clearSearch() {
+    searchInput.value = '';
+    clearSearchBtn.style.display = 'none';
+    renderStudents(allStudentsData);
+    searchInput.focus();
+  }
+
+  // ===== SEARCH EVENT LISTENERS =====
+  if (searchInput) {
+    searchInput.addEventListener('input', performSearch);
+    searchInput.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') {
+        clearSearch();
+      }
+    });
+  }
+
+  if (clearSearchBtn) {
+    clearSearchBtn.addEventListener('click', clearSearch);
   }
 
   async function upsertStudent({ studentId, name }) {
@@ -166,6 +259,10 @@ document.addEventListener('DOMContentLoaded', () => {
   // ---- SINGLE STUDENT FORM ----
   function renderSingleStudentForm() {
     if (!modalContent) return;
+    // Remove auto-sizing class for single operations
+    const modal = document.getElementById('modal');
+    if (modal) modal.classList.remove('modal-auto-size');
+    
     modalContent.innerHTML = `
       <div style="display:flex; gap:8px; margin-bottom:15px;">
         <button id="switchToBulkBtn">Add Multiple Students</button>
@@ -213,27 +310,33 @@ document.addEventListener('DOMContentLoaded', () => {
   // ---- BULK STUDENT FORM ----
   function renderBulkStudentForm() {
     if (!modalContent) return;
+    // Add auto-sizing class for bulk operations
+    const modal = document.getElementById('modal');
+    if (modal) modal.classList.add('modal-auto-size');
+    
     modalContent.innerHTML = `
       <div style="display:flex; gap:8px; margin-bottom:15px;">
         <button id="switchToSingleBtn">Add Single Student</button>
         <button id="switchToCsvBtn">Upload CSV</button>
       </div>
-      <table id="bulkStudentTable" border="1" style="width: 100%; border-collapse: collapse;">
-        <thead>
-          <tr>
-            <th>Student ID</th>
-            <th>Student Name</th>
-            <th>Remove</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr>
-            <td><input type="text" class="studentIdInput" required></td>
-            <td><input type="text" class="nameInput" required></td>
-            <td><button type="button" class="removeRowBtn">✕</button></td>
-          </tr>
-        </tbody>
-      </table>
+      <div class="bulk-table-container">
+        <table id="bulkStudentTable" border="1" style="width: 100%; border-collapse: collapse;">
+          <thead>
+            <tr>
+              <th>Student ID</th>
+              <th>Student Name</th>
+              <th>Remove</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><input type="text" class="studentIdInput" required></td>
+              <td><input type="text" class="nameInput" required></td>
+              <td><button type="button" class="removeRowBtn">✕</button></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
       <button id="addRowBtn" type="button" style="margin-top:10px;">Add Row</button>
       <br />
       <button id="saveAllBtn" type="button" style="margin-top:10px;">Save All</button>
@@ -306,6 +409,10 @@ document.addEventListener('DOMContentLoaded', () => {
   // ---- CSV UPLOAD FORM ----
   function renderCsvUploadForm() {
     if (!modalContent) return;
+    // Add auto-sizing class for CSV operations
+    const modal = document.getElementById('modal');
+    if (modal) modal.classList.add('modal-auto-size');
+    
     modalContent.innerHTML = `
       <div style="display:flex; gap:8px; margin-bottom:15px;">
         <button id="switchToSingleBtn">Add Single Student</button>
@@ -369,9 +476,137 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
+  // ===== BULK ACTIONS FUNCTIONALITY =====
+  
+  // Setup select all functionality
+  function setupSelectAll() {
+    const studentCheckboxes = document.querySelectorAll('.student-checkbox');
+    
+    // Only add event listener if it doesn't already exist
+    if (selectAllCheckbox && !selectAllCheckbox.hasAttribute('data-listener-added')) {
+      selectAllCheckbox.setAttribute('data-listener-added', 'true');
+      selectAllCheckbox.addEventListener('change', (e) => {
+        const currentStudentCheckboxes = document.querySelectorAll('.student-checkbox');
+        currentStudentCheckboxes.forEach(checkbox => checkbox.checked = e.target.checked);
+        updateBulkActionsBar();
+      });
+    }
+  }
+
+  // Update bulk actions bar visibility and count
+  function updateBulkActionsBar() {
+    const checkedBoxes = document.querySelectorAll('.student-checkbox:checked');
+    const count = checkedBoxes.length;
+    
+    if (count > 0) {
+      bulkActionsBar.classList.add('show');
+      selectedCount.textContent = `${count} student${count === 1 ? '' : 's'} selected`;
+    } else {
+      bulkActionsBar.classList.remove('show');
+    }
+
+    // Update select all checkbox state
+    const allCheckboxes = document.querySelectorAll('.student-checkbox');
+    const selectAllCheckbox = document.getElementById('selectAll');
+    if (selectAllCheckbox && allCheckboxes.length > 0) {
+      selectAllCheckbox.checked = count === allCheckboxes.length;
+      selectAllCheckbox.indeterminate = count > 0 && count < allCheckboxes.length;
+    }
+  }
+
+  // Bulk delete functionality
+  if (bulkDeleteBtn) {
+    bulkDeleteBtn.addEventListener('click', async () => {
+      const checkedBoxes = document.querySelectorAll('.student-checkbox:checked');
+      const studentIds = Array.from(checkedBoxes).map(checkbox => checkbox.dataset.studentId);
+      
+      if (studentIds.length === 0) {
+        alert('No students selected for deletion.');
+        return;
+      }
+      
+      const confirmMessage = `Are you sure you want to delete ${studentIds.length} student${studentIds.length === 1 ? '' : 's'}? This action cannot be undone.`;
+      if (!confirm(confirmMessage)) return;
+      
+      // Show loading state
+      bulkDeleteBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Deleting...';
+      bulkDeleteBtn.disabled = true;
+      
+      try {
+        // Delete all selected students
+        const deletePromises = studentIds.map(studentId => deleteDoc(doc(db, 'students', studentId)));
+        await Promise.all(deletePromises);
+        
+        // Update the allStudentsData array
+        allStudentsData = allStudentsData.filter(student => !studentIds.includes(student.id));
+        
+        // Re-render the table
+        performSearch();
+        
+        // Hide bulk actions bar
+        bulkActionsBar.classList.remove('show');
+        
+        // Reset select all checkbox
+        const selectAllCheckbox = document.getElementById('selectAll');
+        if (selectAllCheckbox) {
+          selectAllCheckbox.checked = false;
+          selectAllCheckbox.indeterminate = false;
+        }
+        
+        alert(`Successfully deleted ${studentIds.length} student${studentIds.length === 1 ? '' : 's'}.`);
+        
+      } catch (error) {
+        console.error('Error deleting students:', error);
+        alert('Failed to delete some students. Please try again.');
+      } finally {
+        // Reset button state
+        bulkDeleteBtn.innerHTML = '<i class="fa-solid fa-trash"></i> Delete Selected';
+        bulkDeleteBtn.disabled = false;
+      }
+    });
+  }
+
+  // Cancel selection functionality
+  if (cancelSelectionBtn) {
+    cancelSelectionBtn.addEventListener('click', () => {
+      // Uncheck all checkboxes
+      const allCheckboxes = document.querySelectorAll('.student-checkbox, #selectAll');
+      allCheckboxes.forEach(checkbox => {
+        checkbox.checked = false;
+        checkbox.indeterminate = false;
+      });
+      
+      // Hide bulk actions bar
+      bulkActionsBar.classList.remove('show');
+    });
+  }
+
   // ===== WIRE OPEN BUTTON =====
   const openAddStudentBtn = document.getElementById('openAddStudentBtn');
   if (openAddStudentBtn) openAddStudentBtn.addEventListener('click', showAddStudentForm);
+
+  // ===== WIRE NEW ACTION CARDS =====
+  const quickAddStudentCard = document.getElementById('quickAddStudentCard');
+  const bulkAddStudentsCard = document.getElementById('bulkAddStudentsCard');
+  const csvImportCard = document.getElementById('csvImportCard');
+
+  if (quickAddStudentCard) {
+    quickAddStudentCard.addEventListener('click', showAddStudentForm);
+  }
+
+  if (bulkAddStudentsCard) {
+    bulkAddStudentsCard.addEventListener('click', () => {
+      renderBulkStudentForm();
+      modalOverlay.classList.remove('hidden');
+    });
+  }
+
+  if (csvImportCard) {
+    csvImportCard.addEventListener('click', () => {
+      renderCsvUploadForm();
+      modalOverlay.classList.remove('hidden');
+    });
+  }
 
   // ===== LOAD STUDENTS =====
   loadStudents();

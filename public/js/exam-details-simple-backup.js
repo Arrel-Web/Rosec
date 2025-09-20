@@ -35,32 +35,6 @@ const urlParams = new URLSearchParams(window.location.search);
 examId = urlParams.get('examId');
 console.log('Exam ID:', examId);
 
-// Temporary dummy data for testing
-if (examId === 'test-exam-id') {
-  currentExam = {
-    id: 'test-exam-id',
-    examId: 'test-exam-id',
-    examTitle: 'Sample Exam',
-    subjectId: 'SUB001',
-    subjectName: 'Mathematics', // Added for display
-    classId: 'Class A',
-    createdAt: new Date(),
-    totalQuestions: 5,
-    choiceOptions: 4,
-    studentIdLength: 8,
-    subjectIdLength: 0,
-    items: [ // Sample answer key items (points)
-      { number: 1, correctAnswer: 'A' },
-      { number: 2, correctAnswer: 'B' },
-      { number: 3, correctAnswer: 'C' },
-      { number: 4, correctAnswer: 'D' },
-      { number: 5, correctAnswer: 'A' },
-    ],
-    generatedSheetHTML: '' // Ensure this is empty to use the generated content
-  };
-  console.log('Using dummy exam data for testing.');
-}
-
 // DOM Elements for user dropdown - copied from subjectstudent.js
 const userNameEl = document.getElementById('user-name');
 const userEmailEl = document.getElementById('user-email');
@@ -100,15 +74,6 @@ onAuthStateChanged(auth, async (user) => {
     if (userNameEl) userNameEl.textContent = 'User Name';
     if (userEmailEl) userEmailEl.textContent = 'user@example.com';
     if (userRoleEl) userRoleEl.textContent = 'Role: N/A';
-  }
-});
-
-// Listen for messages from answer sheet maker (when exam is updated)
-window.addEventListener('message', (event) => {
-  if (event.data && event.data.type === 'examUpdated') {
-    console.log('Received exam update:', event.data);
-    // Reload the exam details to show updated data
-    loadExamDetails();
   }
 });
 
@@ -301,15 +266,6 @@ document.addEventListener('DOMContentLoaded', () => {
   function generateExamSheet(exam) {
     if (!exam) return '';
 
-    // Always use the saved HTML if it exists
-    if (exam.generatedSheetHTML && exam.generatedSheetHTML.trim()) {
-      console.log('Using saved generated sheet HTML');
-      return exam.generatedSheetHTML;
-    }
-
-    // This should never happen for new exams, but fallback for old ones
-    console.log('No saved sheet HTML found, this is an old exam');
-
     const totalQuestions = exam.totalQuestions || 30;
     const choiceOptions = exam.choiceOptions || exam.choices || 4;
     const choiceLetters = Array.from({ length: choiceOptions }, (_, i) => String.fromCharCode(65 + i));
@@ -318,7 +274,6 @@ document.addEventListener('DOMContentLoaded', () => {
     const subjectName = exam.subjectName || exam.subjectId || 'N/A';
     const className = exam.classId || exam.class || 'N/A';
     const examDate = formatDate(exam.createdAt || exam.dateCreated);
-    const answerKeyMap = new Map(exam.items ? exam.items.map(item => [item.number, item.correctAnswer]) : []);
 
     return `
       <div class="exam-sheet">
@@ -369,8 +324,6 @@ document.addEventListener('DOMContentLoaded', () => {
           <h3 style="margin: 0 0 20px 0; text-align: center;">ANSWER SHEET</h3>
           ${Array.from({ length: totalQuestions }, (_, i) => {
             const questionNum = i + 1;
-            const correctAnswer = answerKeyMap.get(questionNum);
-            const answerDisplay = correctAnswer ? `<span style="font-weight: bold; color: green; margin-left: 10px;">(${correctAnswer})</span>` : '';
             return `
               <div class="question-item">
                 <div class="question-number">${questionNum}.</div>
@@ -380,7 +333,6 @@ document.addEventListener('DOMContentLoaded', () => {
                       <div class="choice-bubble">${letter}</div>
                     </div>
                   `).join('')}
-                  ${answerDisplay}
                 </div>
               </div>
             `;
@@ -390,166 +342,261 @@ document.addEventListener('DOMContentLoaded', () => {
     `;
   }
 
+  // Show exam sheet modal using answer sheet maker logic
   function showExamSheet() {
     if (!currentExam) {
-      alert('No exam data available');
+      alert('No exam data available.');
       return;
     }
 
-    // Prepare all exam data for URL parameters
-    const params = new URLSearchParams();
-    
-    // Basic exam information - set to edit mode to enable saving
-    params.set('mode', 'edit');
-    params.set('examId', currentExam.examId || currentExam.id);
-    params.set('examTitle', currentExam.examTitle || currentExam.name || currentExam.title || 'Untitled Exam');
-    params.set('totalQuestions', currentExam.totalQuestions || 30);
-    params.set('choiceOptions', currentExam.choiceOptions || currentExam.choices || 4);
-    params.set('questionsPerColumn', currentExam.questionsPerColumn || 10);
-    params.set('studentIdLength', currentExam.studentIdLength || 8);
-    params.set('subjectIdLength', currentExam.subjectIdLength || 0);
-    params.set('subjectId', currentExam.subjectId || '');
-    params.set('classId', currentExam.classId || currentExam.class || '');
-
-    // Pass points configuration if it exists
-    if (currentExam.pointsConfiguration) {
-      params.set('pointsConfig', JSON.stringify(currentExam.pointsConfiguration));
-    }
-
-    // Pass answer key items if they exist
-    if (currentExam.items && currentExam.items.length > 0) {
-      params.set('answerItems', JSON.stringify(currentExam.items));
-    }
-
-    // Redirect to answer sheet maker with all parameters
-    const url = `answer-sheet-maker.html?${params.toString()}`;
-    window.location.href = url;
+    // Generate exam sheet HTML using the same logic as answer sheet maker
+    const examSheetHTML = generateAnswerSheetHTML(currentExam);
+    examSheetContent.innerHTML = examSheetHTML;
+    examSheetModal.style.display = 'flex';
   }
 
+  // Close exam sheet modal
   function closeExamSheet() {
-    if (examSheetModal) {
-      examSheetModal.style.display = 'none';
-    }
+    examSheetModal.style.display = 'none';
   }
 
+  // Print exam sheet using the same print functionality as answer sheet maker
   function printExamSheet() {
-    window.print();
+    // Check if exam sheet is generated
+    if (!examSheetContent || !examSheetContent.innerHTML.trim()) {
+      alert('Please generate the exam sheet first.');
+      return;
+    }
+    
+    // Add a small delay to ensure the print styles are applied
+    setTimeout(() => {
+      window.print();
+    }, 100);
   }
 
-  async function downloadExamSheetPDF() {
-    try {
-      // Create a new window with the exam sheet content
-      const printWindow = window.open('', '_blank');
-      const examSheetHTML = `
-        <!DOCTYPE html>
-        <html>
-        <head>
-          <title>Exam Sheet - ${currentExam.examTitle || 'Untitled'}</title>
-          <style>
-            body { 
-              font-family: 'Times New Roman', serif; 
-              margin: 20px; 
-              line-height: 1.4; 
-            }
-            .exam-sheet { max-width: 700px; margin: 0 auto; }
-            .exam-sheet-header { text-align: center; margin-bottom: 30px; border-bottom: 2px solid #333; padding-bottom: 20px; }
-            .exam-sheet-title { font-size: 24px; font-weight: bold; margin-bottom: 10px; text-transform: uppercase; }
-            .exam-sheet-info { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 20px; font-size: 14px; }
-            .exam-sheet-info div { display: flex; justify-content: space-between; border-bottom: 1px solid #333; padding-bottom: 2px; }
-            .student-info-section { margin-bottom: 30px; padding: 15px; border: 2px solid #333; }
-            .student-info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
-            .info-field { display: flex; align-items: center; gap: 10px; }
-            .info-field label { font-weight: bold; min-width: 80px; }
-            .info-field .field-line { flex: 1; border-bottom: 1px solid #333; height: 20px; }
-            .instructions { background: #f0f0f0; padding: 15px; margin-bottom: 25px; border-left: 4px solid #333; }
-            .instructions h3 { margin: 0 0 10px 0; font-size: 16px; }
-            .instructions ul { margin: 0; padding-left: 20px; }
-            .questions-section { margin-top: 25px; }
-            .question-item { display: flex; align-items: flex-start; margin-bottom: 20px; padding: 10px; border: 1px solid #ddd; border-radius: 5px; }
-            .question-number { font-weight: bold; margin-right: 15px; min-width: 30px; }
-            .question-choices { display: flex; gap: 20px; flex: 1; }
-            .choice-option { display: flex; align-items: center; gap: 8px; }
-            .choice-bubble { width: 20px; height: 20px; border: 2px solid #333; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 12px; }
-          </style>
-        </head>
-        <body>
-          ${generateExamSheet(currentExam)}
-        </body>
-        </html>
-      `;
-      
-      printWindow.document.write(examSheetHTML);
-      printWindow.document.close();
-      
-      // Wait for content to load then print
-      setTimeout(() => {
-        printWindow.print();
-        printWindow.close();
-      }, 500);
-      
-    } catch (error) {
-      console.error('Error generating PDF:', error);
-      alert('Failed to generate PDF. Please try the print option instead.');
+  // Download exam sheet as PDF
+  function downloadExamSheetPDF() {
+    if (!examSheetContent || !examSheetContent.innerHTML.trim()) {
+      alert('Please generate the exam sheet first.');
+      return;
     }
+    
+    const printWindow = window.open('', '_blank');
+    const examSheetHTML = examSheetContent.innerHTML;
+    const examTitle = currentExam.examTitle || currentExam.name || 'Exam';
+    
+    const htmlContent = '<!DOCTYPE html>' +
+      '<html>' +
+      '<head>' +
+      '<title>Exam Sheet - ' + examTitle + '</title>' +
+      '<style>' +
+      '@page { size: 5.5in 8.5in; margin: 0.25in; }' +
+      'body { margin: 0; padding: 0; background: white; font-family: "Courier New", monospace; font-size: 8px; }' +
+      '.answer-sheet-preview { display: block; border: 2px solid #000; margin: 0; padding: 10px; background: white; font-size: 8px; font-family: "Courier New", monospace; page-break-inside: avoid; width: 100%; height: auto; max-width: none; box-sizing: border-box; overflow: visible; }' +
+      '.sheet-header { margin-bottom: 6px; padding-bottom: 6px; border-bottom: 2px solid #000; text-align: center; }' +
+      '.sheet-header h2 { font-size: 12px; margin: 0; font-weight: bold; }' +
+      '.sheet-header p { font-size: 9px; margin: 2px 0; }' +
+      '.student-info { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 6px; padding-bottom: 6px; border-bottom: 1px solid #000; font-size: 8px; }' +
+      '.id-sections { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin: 6px 0; padding: 6px 0; border-top: 1px solid #000; border-bottom: 1px solid #000; }' +
+      '.id-section { text-align: center; }' +
+      '.id-section h4 { font-size: 8px; margin-bottom: 4px; font-weight: bold; }' +
+      '.id-bubbles { display: flex; justify-content: center; gap: 3px; flex-wrap: wrap; }' +
+      '.digit-column { display: flex; flex-direction: column; align-items: center; gap: 1px; }' +
+      '.digit-label { font-size: 6px; font-weight: bold; margin-bottom: 1px; }' +
+      '.id-bubble { width: 8px; height: 8px; border: 1px solid #000; border-radius: 50%; display: block; margin: 0.5px auto; font-size: 5px; line-height: 6px; text-align: center; }' +
+      '.questions-grid { margin-top: 4px; gap: 4px; display: flex; flex-direction: row; justify-content: space-between; align-items: flex-start; }' +
+      '.question-column { break-inside: avoid; flex: 1; margin-right: 6px; }' +
+      '.question-column:last-child { margin-right: 0; }' +
+      '.question-row { margin-bottom: 2px; padding: 0.5px; display: flex; align-items: center; gap: 2px; }' +
+      '.question-number { min-width: 15px; font-size: 8px; font-weight: bold; flex-shrink: 0; }' +
+      '.question-choices { display: flex; align-items: center; gap: 2px; flex: 1; }' +
+      '.choice-bubble { width: 10px; height: 10px; border: 1px solid #000; border-radius: 50%; display: inline-block; margin: 0 1px; }' +
+      '.question-choices span { font-size: 7px; }' +
+      '.points-display { font-size: 6px; color: #000; margin-left: 3px; }' +
+      '.scanner-marker { background: #000; width: 10px; height: 10px; margin: 0 2px; display: inline-block; }' +
+      '</style>' +
+      '</head>' +
+      '<body>' +
+      examSheetHTML +
+      '<script>' +
+      'window.onload = function() {' +
+      'setTimeout(function() { window.print(); }, 100);' +
+      '}' +
+      '</script>' +
+      '</body>' +
+      '</html>';
+    
+    printWindow.document.write(htmlContent);
+    printWindow.document.close();
   }
 
-  // ------------------- Answer Key Creator -------------------
-
-  function showAnswerKeyCreator() {
-    if (!currentExam) return;
-    const totalQs = currentExam.totalQuestions || 30;
-    const choices = currentExam.choiceOptions || currentExam.choices || 4;
-
-    const choiceLetters = Array.from({ length: choices }, (_, i) => String.fromCharCode(65 + i));
-    if (!answerKeyCreatorGrid) return;
-    answerKeyCreatorGrid.innerHTML = '';
-    currentAnswerKey = {};
-
-    if (currentExam.items && currentExam.items.length > 0) {
-      currentExam.items.forEach(item => currentAnswerKey[item.number] = item.correctAnswer);
+  // Generate answer sheet HTML using the same logic as answer-sheet-maker.js
+  function generateAnswerSheetHTML(exam) {
+    const examTitle = exam.examTitle || exam.name || exam.title || 'Examination';
+    const totalQuestions = exam.totalQuestions || 30;
+    const choiceCount = exam.choiceOptions || exam.choices || 4;
+    const subjectInfo = exam.subjectId || 'Subject';
+    const className = exam.classId || exam.class || '';
+    const studentIdLength = exam.studentIdLength || 8;
+    const subjectIdLength = exam.subjectIdLength || 0;
+    
+    // Generate choice letters
+    const choices = [];
+    for (let i = 0; i < choiceCount; i++) {
+      choices.push(String.fromCharCode(65 + i)); // A, B, C, D, E
     }
-
-    for (let i = 1; i <= totalQs; i++) {
-      const creatorItem = document.createElement('div');
-      creatorItem.className = 'creator-item';
-
-      const questionNumber = document.createElement('div');
-      questionNumber.className = 'creator-question';
-      questionNumber.textContent = `Q${i}`;
-
-      const choicesContainer = document.createElement('div');
-      choicesContainer.className = 'creator-choices';
-
-      choiceLetters.forEach(choice => {
-        const bubble = document.createElement('div');
-        bubble.className = 'creator-bubble';
-        bubble.textContent = choice;
-        bubble.setAttribute('data-question', i);
-        bubble.setAttribute('data-choice', choice);
-        bubble.title = `Question ${i} - Choice ${choice}`;
-        if (currentAnswerKey[i] === choice) bubble.classList.add('selected');
-
-        bubble.addEventListener('click', (e) => {
-          const allBubblesForQuestion = document.querySelectorAll(`[data-question="${i}"].creator-bubble`);
-          if (bubble.classList.contains('selected')) {
-            bubble.classList.remove('selected');
-            delete currentAnswerKey[i];
-          } else {
-            allBubblesForQuestion.forEach(b => b.classList.remove('selected'));
-            bubble.classList.add('selected');
-            currentAnswerKey[i] = choice;
-          }
-        });
-
-        choicesContainer.appendChild(bubble);
-      });
-
-      creatorItem.appendChild(questionNumber);
-      creatorItem.appendChild(choicesContainer);
-      answerKeyCreatorGrid.appendChild(creatorItem);
+    
+    // Generate scanner start/end markers
+    const scannerStartMarker = '<div class="scanner-marker"></div>'.repeat(5);
+    const scannerEndMarker = '<div class="scanner-marker"></div>'.repeat(5);
+    
+    // Generate answer sheet HTML
+    let sheetHTML = '<div class="sheet-header">' +
+      '<div style="display: flex; justify-content: space-between; align-items: center;">' +
+      scannerStartMarker +
+      '<div style="text-align: center; flex: 1;">' +
+      '<h2 style="margin: 0; font-size: 18px;">' + examTitle + '</h2>' +
+      '<p style="margin: 5px 0; font-size: 14px;">' + subjectInfo + '</p>' +
+      (className ? '<p style="margin: 5px 0; font-size: 12px;">Class: ' + className + '</p>' : '') +
+      '</div>' +
+      scannerStartMarker +
+      '</div>' +
+      '</div>' +
+      '<div class="student-info">' +
+      '<div>' +
+      '<strong>Name:</strong> ________________________________<br><br>' +
+      '<strong>Date:</strong> ________________________________' +
+      '</div>' +
+      '<div>' +
+      '<strong>Section:</strong> ________________________________<br><br>' +
+      '<strong>Signature:</strong> ________________________________' +
+      '</div>' +
+      '</div>';
+    
+    // Add ID sections
+    sheetHTML += generateIdSections(studentIdLength, subjectIdLength);
+    
+    // Generate questions section
+    sheetHTML += '<div class="questions-grid">';
+    
+    // Determine optimal layout based on question count
+    let actualQuestionsPerColumn;
+    
+    if (totalQuestions > 50) {
+      actualQuestionsPerColumn = Math.ceil(totalQuestions / 4); // 4 columns max
+    } else if (totalQuestions > 30) {
+      actualQuestionsPerColumn = Math.ceil(totalQuestions / 3); // 3 columns max
+    } else if (totalQuestions > 15) {
+      actualQuestionsPerColumn = Math.ceil(totalQuestions / 2); // 2 columns max
+    } else {
+      actualQuestionsPerColumn = totalQuestions; // Single column for very few questions
     }
+    
+    // Generate questions in columns
+    const columns = Math.ceil(totalQuestions / actualQuestionsPerColumn);
+    for (let col = 0; col < columns; col++) {
+      sheetHTML += '<div class="question-column">';
+      
+      const startQuestion = col * actualQuestionsPerColumn + 1;
+      const endQuestion = Math.min(startQuestion + actualQuestionsPerColumn - 1, totalQuestions);
+      
+      for (let q = startQuestion; q <= endQuestion; q++) {
+        const points = getPointsForQuestion(q, exam.pointsConfiguration || [{ start: 1, end: totalQuestions, points: 1 }]);
+        
+        sheetHTML += '<div class="question-row">' +
+          '<span class="question-number">' + q + '.</span>' +
+          '<div class="question-choices">' +
+          choices.map(choice => 
+            '<span class="choice-bubble" data-question="' + q + '" data-choice="' + choice + '"></span>' +
+            '<span>' + choice + '</span>'
+          ).join('') +
+          '<span class="points-display">(' + points + ' pt' + (points !== 1 ? 's' : '') + ')</span>' +
+          '</div>' +
+          '</div>';
+      }
+      
+      sheetHTML += '</div>';
+    }
+    
+    const totalPoints = calculateTotalPoints(exam.pointsConfiguration || [{ start: 1, end: totalQuestions, points: 1 }], totalQuestions);
+    
+    sheetHTML += '</div>' +
+      '<div style="margin-top: 30px; text-align: center; display: flex; justify-content: space-between; align-items: center;">' +
+      scannerEndMarker +
+      '<div style="flex: 1; text-align: center;">' +
+      '<strong>END OF ANSWER SHEET</strong><br>' +
+      '<small>Total Questions: ' + totalQuestions + ' | Total Points: ' + totalPoints + '</small>' +
+      '</div>' +
+      scannerEndMarker +
+      '</div>';
+    
+    return sheetHTML;
+  }
 
-    if (answerKeyCreator) answerKeyCreator.style.display = 'block';
+  // Helper functions from answer-sheet-maker.js
+  function generateIdSections(studentIdLength, subjectIdLength) {
+    let idHTML = '<div class="id-sections">';
+    
+    // Student ID section (mandatory)
+    idHTML += '<div class="id-section">' +
+      '<h4>STUDENT ID (Required)</h4>' +
+      '<div class="id-bubbles">';
+    
+    for (let digitIndex = 0; digitIndex < studentIdLength; digitIndex++) {
+      idHTML += '<div class="digit-column">' +
+        '<div class="digit-label">' + (digitIndex + 1) + '</div>';
+      
+      for (let digit = 0; digit < 10; digit++) {
+        idHTML += '<div class="id-bubble" data-type="student" data-digit="' + digitIndex + '" data-value="' + digit + '">' + digit + '</div>';
+      }
+      
+      idHTML += '</div>';
+    }
+    
+    idHTML += '</div></div>';
+    
+    // Subject ID section (optional)
+    if (subjectIdLength > 0) {
+      idHTML += '<div class="id-section">' +
+        '<h4>SUBJECT ID (Optional)</h4>' +
+        '<div class="id-bubbles">';
+      
+      for (let digitIndex = 0; digitIndex < subjectIdLength; digitIndex++) {
+        idHTML += '<div class="digit-column">' +
+          '<div class="digit-label">' + (digitIndex + 1) + '</div>';
+        
+        for (let digit = 0; digit < 10; digit++) {
+          idHTML += '<div class="id-bubble" data-type="subject" data-digit="' + digitIndex + '" data-value="' + digit + '">' + digit + '</div>';
+        }
+        
+        idHTML += '</div>';
+      }
+      
+      idHTML += '</div></div>';
+    } else {
+      // Add empty section to maintain grid layout
+      idHTML += '<div class="id-section" style="opacity: 0.3;"><h4>Subject ID Disabled</h4><p style="font-size: 12px;">Set length > 0 to enable</p></div>';
+    }
+    
+    idHTML += '</div>';
+    return idHTML;
+  }
+
+  function getPointsForQuestion(questionNumber, pointsRanges) {
+    for (const range of pointsRanges) {
+      if (questionNumber >= range.start && questionNumber <= range.end) {
+        return range.points;
+      }
+    }
+    return 1; // Default points
+  }
+
+  function calculateTotalPoints(pointsRanges, totalQuestions) {
+    let total = 0;
+    for (let q = 1; q <= totalQuestions; q++) {
+      total += getPointsForQuestion(q, pointsRanges);
+    }
+    return total;
   }
 
   async function saveAnswerKey() {
@@ -601,12 +648,6 @@ document.addEventListener('DOMContentLoaded', () => {
   if (closeExamSheetBtn) closeExamSheetBtn.addEventListener('click', closeExamSheet);
   if (printExamSheetBtn) printExamSheetBtn.addEventListener('click', printExamSheet);
   if (downloadExamSheetBtn) downloadExamSheetBtn.addEventListener('click', downloadExamSheetPDF);
-
-  function closeExamSheet() {
-    if (examSheetModal) {
-      examSheetModal.style.display = 'none';
-    }
-  }
 
   // Close modal when clicking outside
   if (examSheetModal) {

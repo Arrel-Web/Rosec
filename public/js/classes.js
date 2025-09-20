@@ -1,10 +1,11 @@
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js';
 import { 
-  getFirestore, collection, getDocs, query, where, addDoc, doc, getDoc, setDoc 
+  getFirestore, collection, getDocs, query, where, addDoc, doc, getDoc, setDoc, deleteDoc 
 } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js';
 import { 
   getAuth, onAuthStateChanged, signOut 
 } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js';
+import { getUserRole, applySidebarRestrictions, applyPageRestrictions, applyImmediateRestrictions, removeImmediateRestrictions, clearRoleCache } from './role-manager.js';
 
 // Firebase Config
 const firebaseConfig = {
@@ -22,7 +23,8 @@ const db = getFirestore(app);
 const auth = getAuth(app);
 
 // DOM Elements
-const suggestedList = document.getElementById('suggestedList') || document.getElementById('classesContainer');
+const classesGrid = document.getElementById('classesGrid');
+const suggestedList = classesGrid; // Use classesGrid as the main container
 const suggestedCount = document.getElementById('suggested-count');
 const subjectsGrid = document.getElementById('subjectsGrid');
 const userNameEl = document.getElementById('user-name');
@@ -31,12 +33,19 @@ const userRoleEl = document.getElementById('user-role');
 const userIconBtn = document.getElementById('userIconBtn');
 const userDropdown = document.getElementById('userDropdown');
 
-const addSubjectFormSection = document.getElementById('addSubjectFormSection');
+// Subjects section elements
+const subjectsSection = document.getElementById('subjectsSection');
 const selectedClassNameSpan = document.getElementById('selectedClassName');
+const addSubjectBtn = document.getElementById('addSubjectBtn');
+
+// Add subject form elements
+const addSubjectFormSection = document.getElementById('addSubjectForm');
+const addSubjectClassName = document.getElementById('addSubjectClassName');
 const selectedClassIdInput = document.getElementById('selectedClassId');
-const addSubjectForm = document.getElementById('addSubjectForm');
+const subjectForm = document.getElementById('subjectForm');
 const subjectIdInput = document.getElementById('subjectIdInput');
 const subjectNameInput = document.getElementById('subjectNameInput');
+const cancelAddSubject = document.getElementById('cancelAddSubject');
 
 // Teacher form inputs
 const teacherEmailInput = document.getElementById('teacherSelect');
@@ -137,45 +146,175 @@ export async function loadAcademicYearsIntoDropdown(selectedValue = '') {
 async function createSubjectCard(subject, classId) {
   const teacherName = await getTeacherNameByEmail(subject.assignedTeacherEmail);
   const link = document.createElement('a');
-  link.className = 'grid-item subject-card-link';
+  link.className = 'subject-card';
   link.href = `subject-details.html?subjectId=${encodeURIComponent(subject.subjectId)}&classId=${encodeURIComponent(classId)}`;
-  link.style.display = 'block';
   link.style.textDecoration = 'none';
   link.style.color = 'inherit';
   link.innerHTML = `
-    <div class="subject-card" style="padding: 10px;">
-      <h4>${subject.name}</h4>
-      <p class="muted" style="font-size: 0.9em; margin-top: 4px;">${teacherName}</p>
-    </div>
+    <h4>${subject.name}</h4>
+    <div class="subject-id">${subject.subjectId}</div>
+    <div class="teacher-info">${teacherName}</div>
   `;
   return link;
 }
 
-// Get user role
-async function getUserRole(email) {
+// Delete class function
+async function deleteClass(classId) {
+  const user = auth.currentUser;
+  if (!user) {
+    alert('Please sign in to delete classes.');
+    return;
+  }
+
+  // Check user role
+  const userRole = await getUserRole(user.email, db);
+  if (userRole !== 'admin') {
+    alert('Only administrators can delete classes.');
+    return;
+  }
+
+  // Confirm deletion
+  const confirmDelete = confirm(`Are you sure you want to delete class "${classId}"?\n\nThis will also remove all subjects linked to this class. This action cannot be undone.`);
+  if (!confirmDelete) {
+    return;
+  }
+
   try {
-    const usersCol = collection(db, 'users');
-    const q = query(usersCol, where('email', '==', email));
-    const snap = await getDocs(q);
-    if (snap.empty) return null;
-    return snap.docs[0].data().role || null;
-  } catch (err) {
-    console.error('Error getting user role:', err);
-    return null;
+    console.log(`Deleting class: ${classId}`);
+
+    // Find all documents in the classes collection with this classId
+    const classesQuery = query(collection(db, 'classes'), where('classId', '==', classId));
+    const classesSnap = await getDocs(classesQuery);
+
+    if (classesSnap.empty) {
+      alert('Class not found.');
+      return;
+    }
+
+    // Collect all subject IDs linked to this class
+    const subjectIds = new Set();
+    classesSnap.forEach(doc => {
+      const data = doc.data();
+      if (data.subjectId) {
+        subjectIds.add(data.subjectId);
+      }
+    });
+
+    // Delete all class documents
+    const deletePromises = [];
+    classesSnap.forEach(doc => {
+      deletePromises.push(deleteDoc(doc.ref));
+    });
+
+    // Delete all subjects linked to this class
+    if (subjectIds.size > 0) {
+      console.log(`Deleting ${subjectIds.size} subjects linked to class ${classId}:`, Array.from(subjectIds));
+      
+      for (const subjectId of subjectIds) {
+        const subjectDocRef = doc(db, 'subjects', subjectId);
+        deletePromises.push(deleteDoc(subjectDocRef));
+      }
+    }
+
+    await Promise.all(deletePromises);
+    console.log(`Successfully deleted class ${classId} and ${subjectIds.size} associated subjects`);
+
+    // Hide subjects section if the deleted class was selected
+    const selectedClassId = selectedClassIdInput ? selectedClassIdInput.value : '';
+    if (selectedClassId === classId) {
+      if (subjectsSection) subjectsSection.style.display = 'none';
+      if (addSubjectFormSection) addSubjectFormSection.classList.remove('show');
+      if (selectedClassIdInput) selectedClassIdInput.value = '';
+      if (selectedClassNameSpan) selectedClassNameSpan.textContent = '';
+      if (addSubjectClassName) addSubjectClassName.textContent = '';
+      if (subjectsGrid) subjectsGrid.innerHTML = `<p class="muted">Select a class to view its subjects.</p>`;
+    }
+
+    // Reload classes
+    const role = await getUserRole(user.email, db);
+    await loadClasses(user.email, role);
+
+    alert(`Class "${classId}" has been successfully deleted.`);
+
+  } catch (error) {
+    console.error('Error deleting class:', error);
+    alert('Failed to delete class: ' + error.message);
   }
 }
+
+// Add teacher welcome message
+function addTeacherWelcomeMessage(userName) {
+  // Remove existing welcome message if it exists
+  const existingMessage = document.querySelector('.teacher-welcome');
+  if (existingMessage) {
+    existingMessage.remove();
+  }
+
+  // Create welcome message
+  const welcomeDiv = document.createElement('div');
+  welcomeDiv.className = 'teacher-welcome';
+  welcomeDiv.innerHTML = `
+    <h3><i class="fa-solid fa-chalkboard-user"></i> Welcome, ${userName}!</h3>
+    <p>Here are the classes assigned to you. Click on a class to view and manage its subjects.</p>
+  `;
+
+  // Insert before the grid container
+  const gridContainer = document.querySelector('.grid-container');
+  if (gridContainer) {
+    gridContainer.parentNode.insertBefore(welcomeDiv, gridContainer);
+  }
+}
+
+// getUserRole function is now imported from role-manager.js
+
+// Track the current loading request to prevent race conditions
+let currentLoadingClassId = null;
+let loadingRequestId = 0;
 
 // Load subjects for a class
 async function loadSubjectsForClass(classId) {
   if (!subjectsGrid) return;
-  subjectsGrid.innerHTML = '';
+  
+  // Generate a unique request ID for this load operation
+  const requestId = ++loadingRequestId;
+  currentLoadingClassId = classId;
+  
+  // Show loading state immediately with spinner
+  subjectsGrid.innerHTML = `
+    <div class="empty-state">
+      <div class="loading-spinner"></div>
+      <h3>Loading Subjects</h3>
+      <p>Loading subjects for ${classId}...</p>
+    </div>
+  `;
+  
   if (!classId) {
-    subjectsGrid.innerHTML = `<p class="muted">No class ID provided.</p>`;
+    // Only update if this is still the current request
+    if (currentLoadingClassId === classId && requestId === loadingRequestId) {
+      subjectsGrid.innerHTML = `
+        <div class="empty-state">
+          <i class="fa-solid fa-exclamation-triangle"></i>
+          <h3>No Class ID</h3>
+          <p>No class ID provided</p>
+        </div>
+      `;
+    }
     return;
   }
+  
   try {
+    // Get current user and role for filtering
+    const user = auth.currentUser;
+    const userRole = user ? await getUserRole(user.email, db) : null;
+    
     const classesQuery = query(collection(db, 'classes'), where('classId', '==', classId));
     const classesSnap = await getDocs(classesQuery);
+    
+    // Check if this request is still current before proceeding
+    if (currentLoadingClassId !== classId || requestId !== loadingRequestId) {
+      return; // Abort this request as a newer one has started
+    }
+    
     if (classesSnap.empty) {
       subjectsGrid.innerHTML = `<p class="muted">No subjects linked to this class.</p>`;
       return;
@@ -184,45 +323,114 @@ async function loadSubjectsForClass(classId) {
     const subjectIds = [];
     classesSnap.forEach(doc => {
       const data = doc.data();
-      if (data.subjectId) subjectIds.push(data.subjectId.toLowerCase());
+      if (data.subjectId) {
+        // For teachers, only include subjects assigned to them
+        if (userRole === 'teacher') {
+          if (data.teacherEmail === user.email) {
+            subjectIds.push(data.subjectId.toLowerCase());
+          }
+        } else {
+          // For admins, include all subjects
+          subjectIds.push(data.subjectId.toLowerCase());
+        }
+      }
     });
 
+    // Check again before continuing
+    if (currentLoadingClassId !== classId || requestId !== loadingRequestId) {
+      return;
+    }
+
     if (subjectIds.length === 0) {
-      subjectsGrid.innerHTML = `<p class="muted">No subject IDs found for this class.</p>`;
+      const message = userRole === 'teacher' 
+        ? 'No subjects assigned to you in this class.'
+        : 'No subject IDs found for this class.';
+      subjectsGrid.innerHTML = `<p class="muted">${message}</p>`;
       return;
     }
 
     const allSubjectsSnap = await getDocs(collection(db, 'subjects'));
+    
+    // Check again after the async operation
+    if (currentLoadingClassId !== classId || requestId !== loadingRequestId) {
+      return;
+    }
+    
     let matchedSubjects = [];
     allSubjectsSnap.forEach(doc => {
       const subjectData = doc.data();
       if (subjectIds.includes((subjectData.subjectId || '').toLowerCase())) {
-        matchedSubjects.push(subjectData);
+        // Additional filter for teachers - double check the assignment
+        if (userRole === 'teacher') {
+          if (subjectData.assignedTeacherEmail === user.email) {
+            matchedSubjects.push(subjectData);
+          }
+        } else {
+          // For admins, include all matched subjects
+          matchedSubjects.push(subjectData);
+        }
       }
     });
 
-    if (matchedSubjects.length === 0) {
-      subjectsGrid.innerHTML = `<p class="muted">No matching subjects found for this class.</p>`;
+    // Final check before updating the UI
+    if (currentLoadingClassId !== classId || requestId !== loadingRequestId) {
       return;
     }
 
+    if (matchedSubjects.length === 0) {
+      const message = userRole === 'teacher' 
+        ? 'No subjects assigned to you in this class.'
+        : 'No matching subjects found for this class.';
+      subjectsGrid.innerHTML = `<p class="muted">${message}</p>`;
+      return;
+    }
+
+    // Clear the grid and add subjects
+    subjectsGrid.innerHTML = '';
     for (const subject of matchedSubjects) {
+      // Check before each card creation
+      if (currentLoadingClassId !== classId || requestId !== loadingRequestId) {
+        return;
+      }
+      
       const card = await createSubjectCard(subject, classId);
-      subjectsGrid.appendChild(card);
+      
+      // Final check before appending
+      if (currentLoadingClassId === classId && requestId === loadingRequestId) {
+        subjectsGrid.appendChild(card);
+      }
     }
   } catch (err) {
     console.error('Error loading subjects:', err);
-    subjectsGrid.innerHTML = `<p class="muted">Error loading subjects.</p>`;
+    // Only show error if this is still the current request
+    if (currentLoadingClassId === classId && requestId === loadingRequestId) {
+      subjectsGrid.innerHTML = `<p class="muted">Error loading subjects.</p>`;
+    }
   }
 }
 
 // Load classes
 async function loadClasses(userEmail, role) {
-  if (!suggestedList) return;
-  suggestedList.innerHTML = '';
+  if (!classesGrid) return;
+  
+  // Show loading state
+  classesGrid.innerHTML = `
+    <div class="empty-state">
+      <div class="loading-spinner"></div>
+      <h3>Loading Classes</h3>
+      <p>Please wait...</p>
+    </div>
+  `;
+  
   if (suggestedCount) suggestedCount.textContent = '';
   if (!role) {
-    suggestedList.innerHTML = `<p class="muted">Role not found.</p>`;
+    classesGrid.innerHTML = `
+      <div class="empty-state">
+        <i class="fa-solid fa-book"></i>
+        <h3>Role not found</h3>
+        <p>Unable to determine your role</p>
+      </div>
+    `;
     if (userRoleEl) userRoleEl.textContent = 'Role: N/A';
     return;
   }
@@ -234,14 +442,26 @@ async function loadClasses(userEmail, role) {
   } else if (role === 'teacher') {
     classesQuery = query(collection(db, 'classes'), where('teacherEmail', '==', userEmail));
   } else {
-    suggestedList.innerHTML = `<p class="muted">No classes available for your role.</p>`;
+    classesGrid.innerHTML = `
+      <div class="empty-state">
+        <i class="fa-solid fa-book"></i>
+        <h3>No Access</h3>
+        <p>No classes available for your role</p>
+      </div>
+    `;
     return;
   }
 
   try {
     const classesSnapshot = await getDocs(classesQuery);
     if (classesSnapshot.empty) {
-      suggestedList.innerHTML = `<p class="muted">No classes found.</p>`;
+      classesGrid.innerHTML = `
+        <div class="empty-state">
+          <i class="fa-solid fa-book"></i>
+          <h3>No Classes</h3>
+          <p>Create your first class to get started</p>
+        </div>
+      `;
       return;
     }
 
@@ -252,74 +472,195 @@ async function loadClasses(userEmail, role) {
       if (!uniqueClasses.has(cId)) uniqueClasses.set(cId, data);
     });
 
+    // Clear loading state and add classes
+    classesGrid.innerHTML = '';
     uniqueClasses.forEach(classData => {
       const div = document.createElement('div');
-      div.className = 'suggested-item clickable';
+      div.className = 'class-card';
       div.setAttribute('data-class-id', classData.classId);
       div.innerHTML = `
-        <div class="suggested-info">
-          <strong>${classData.classId}</strong><br />
-          <span class="muted">Academic Year: ${classData.academicId || 'N/A'}</span>
+        <button class="delete-class-btn" data-class-id="${classData.classId}" title="Delete Class">
+          <i class="fa-solid fa-trash"></i>
+        </button>
+        <h5>${classData.classId}</h5>
+        <div class="card-detail">
+          <span class="label">Academic Year:</span>
+          <span class="value">${classData.academicId || 'N/A'}</span>
         </div>
       `;
-      div.addEventListener('click', () => {
-        if (addSubjectFormSection) addSubjectFormSection.style.display = 'block';
+      
+      // Add click handler for the card (excluding delete button)
+      div.addEventListener('click', (e) => {
+        // Don't select class if delete button was clicked
+        if (e.target.closest('.delete-class-btn')) {
+          return;
+        }
+        
+        // Remove selected class from all cards
+        document.querySelectorAll('.class-card').forEach(card => {
+          card.classList.remove('selected');
+        });
+        // Add selected class to clicked card
+        div.classList.add('selected');
+        
+        // Show subjects section
+        if (subjectsSection) subjectsSection.style.display = 'block';
         if (selectedClassIdInput) selectedClassIdInput.value = classData.classId;
         if (selectedClassNameSpan) selectedClassNameSpan.textContent = classData.classId;
+        if (addSubjectClassName) addSubjectClassName.textContent = classData.classId;
+        
         loadSubjectsForClass(classData.classId);
       });
-      suggestedList.appendChild(div);
+
+      // Add delete button handler
+      const deleteBtn = div.querySelector('.delete-class-btn');
+      deleteBtn.addEventListener('click', async (e) => {
+        e.stopPropagation(); // Prevent card selection
+        await deleteClass(classData.classId);
+      });
+
+      classesGrid.appendChild(div);
     });
 
     if (suggestedCount) suggestedCount.textContent = uniqueClasses.size;
   } catch (err) {
     console.error('Error loading classes:', err);
-    suggestedList.innerHTML = `<p class="muted">Error loading classes.</p>`;
+    classesGrid.innerHTML = `
+      <div class="empty-state">
+        <i class="fa-solid fa-exclamation-triangle"></i>
+        <h3>Error</h3>
+        <p>Failed to load classes</p>
+      </div>
+    `;
   }
 }
 
+// Add Subject button event handler
+if (addSubjectBtn) {
+  addSubjectBtn.addEventListener('click', () => {
+    console.log('Add Subject button clicked');
+    if (addSubjectFormSection) {
+      addSubjectFormSection.classList.add('show');
+      console.log('Form shown');
+    } else {
+      console.error('addSubjectFormSection not found');
+    }
+  });
+} else {
+  console.error('addSubjectBtn not found');
+}
+
+// Cancel Add Subject button event handler
+if (cancelAddSubject) {
+  cancelAddSubject.addEventListener('click', () => {
+    console.log('Cancel button clicked');
+    if (addSubjectFormSection) {
+      addSubjectFormSection.classList.remove('show');
+    }
+    if (subjectForm) {
+      subjectForm.reset();
+    }
+  });
+} else {
+  console.error('cancelAddSubject not found');
+}
+
 // Add subject form submission
-if (addSubjectForm) {
-  addSubjectForm.addEventListener('submit', async (e) => {
+if (subjectForm) {
+  subjectForm.addEventListener('submit', async (e) => {
+    console.log('Subject form submitted');
     e.preventDefault();
-    const subjectId = subjectIdInput.value.trim();
-    const subjectName = subjectNameInput.value.trim();
-    const classId = selectedClassIdInput.value;
+    
+    // Get form values
+    const subjectId = subjectIdInput ? subjectIdInput.value.trim() : '';
+    const subjectName = subjectNameInput ? subjectNameInput.value.trim() : '';
+    const classId = selectedClassIdInput ? selectedClassIdInput.value : '';
     const selectedTeacherEmail = teacherEmailInput ? teacherEmailInput.value : '';
     const newTeacherName = newTeacherNameInput ? newTeacherNameInput.value.trim() : '';
     const newTeacherEmail = newTeacherEmailInput ? newTeacherEmailInput.value.trim() : '';
 
-    if (!classId || !subjectId || !subjectName) {
-      alert('Please fill out all required fields.');
+    console.log('Form values:', {
+      subjectId,
+      subjectName,
+      classId,
+      selectedTeacherEmail,
+      newTeacherName,
+      newTeacherEmail
+    });
+
+    // Validate required fields
+    if (!classId) {
+      alert('No class selected. Please select a class first.');
       return;
     }
-    if (!selectedTeacherEmail && (!newTeacherName || !newTeacherEmail)) {
-      alert('Please select an existing teacher or add a new one.');
+    
+    if (!subjectId || !subjectName) {
+      alert('Please fill out Subject ID and Subject Name.');
+      return;
+    }
+
+    const user = auth.currentUser;
+    if (!user) {
+      alert('Please sign in to add subjects.');
       return;
     }
 
     try {
+      const userRole = await getUserRole(user.email, db);
+      console.log('User role:', userRole);
+      
       let teacherEmailToAssign = '';
-      if (selectedTeacherEmail) {
-        teacherEmailToAssign = selectedTeacherEmail;
+
+      // For teachers, automatically assign themselves
+      if (userRole === 'teacher') {
+        teacherEmailToAssign = user.email;
+        console.log('Teacher role - assigning self:', teacherEmailToAssign);
       } else {
-        const teacherDocRef = doc(db, 'teachers', newTeacherEmail);
-        const teacherDocSnap = await getDoc(teacherDocRef);
-        if (!teacherDocSnap.exists()) {
-          await setDoc(teacherDocRef, { email: newTeacherEmail, name: newTeacherName });
-          await loadTeachersIntoDropdown();
+        // For admins, handle teacher assignment
+        if (selectedTeacherEmail) {
+          // Use existing teacher
+          teacherEmailToAssign = selectedTeacherEmail;
+          console.log('Using existing teacher:', teacherEmailToAssign);
+        } else if (newTeacherName && newTeacherEmail) {
+          // Create new teacher
+          console.log('Creating new teacher:', newTeacherName, newTeacherEmail);
+          const teacherDocRef = doc(db, 'teachers', newTeacherEmail);
+          const teacherDocSnap = await getDoc(teacherDocRef);
+          if (!teacherDocSnap.exists()) {
+            await setDoc(teacherDocRef, { email: newTeacherEmail, name: newTeacherName });
+            console.log('New teacher created');
+            await loadTeachersIntoDropdown();
+          }
+          teacherEmailToAssign = newTeacherEmail;
+        } else {
+          // No teacher assignment - this is optional
+          console.log('No teacher assigned');
+          teacherEmailToAssign = '';
         }
-        teacherEmailToAssign = newTeacherEmail;
       }
 
+      console.log('Final teacher email to assign:', teacherEmailToAssign);
+
+      // Create or update subject
       const subjectDocRef = doc(db, 'subjects', subjectId);
       const subjectDocSnap = await getDoc(subjectDocRef);
+      
       if (!subjectDocSnap.exists()) {
-        await setDoc(subjectDocRef, { subjectId, name: subjectName, assignedTeacherEmail: teacherEmailToAssign });
+        await setDoc(subjectDocRef, { 
+          subjectId, 
+          name: subjectName, 
+          assignedTeacherEmail: teacherEmailToAssign 
+        });
+        console.log('New subject created');
       } else {
-        await setDoc(subjectDocRef, { assignedTeacherEmail: teacherEmailToAssign, name: subjectName }, { merge: true });
+        await setDoc(subjectDocRef, { 
+          assignedTeacherEmail: teacherEmailToAssign, 
+          name: subjectName 
+        }, { merge: true });
+        console.log('Subject updated');
       }
 
+      // Get class academic ID
       let classAcademicId = '';
       const classQuery = query(collection(db, 'classes'), where('classId', '==', classId));
       const classSnap = await getDocs(classQuery);
@@ -327,8 +668,13 @@ if (addSubjectForm) {
         classAcademicId = classSnap.docs[0].data().academicId || '';
       }
 
-      const duplicateQuery = query(collection(db, 'classes'), where('classId', '==', classId), where('subjectId', '==', subjectId));
+      // Link subject to class
+      const duplicateQuery = query(collection(db, 'classes'), 
+        where('classId', '==', classId), 
+        where('subjectId', '==', subjectId)
+      );
       const duplicateSnap = await getDocs(duplicateQuery);
+      
       if (duplicateSnap.empty) {
         await addDoc(collection(db, 'classes'), { 
           classId, 
@@ -336,16 +682,29 @@ if (addSubjectForm) {
           academicId: classAcademicId, 
           teacherEmail: teacherEmailToAssign 
         });
+        console.log('Subject linked to class');
+      } else {
+        console.log('Subject already linked to class');
       }
 
       alert(`Subject "${subjectName}" added to class ${classId}`);
-      addSubjectForm.reset();
+      
+      // Reset form and hide it
+      subjectForm.reset();
+      if (addSubjectFormSection) {
+        addSubjectFormSection.classList.remove('show');
+      }
+      
+      // Reload subjects for the class
       loadSubjectsForClass(classId);
+      
     } catch (err) {
-      console.error(err);
-      alert('Failed to add subject.');
+      console.error('Error adding subject:', err);
+      alert('Failed to add subject: ' + err.message);
     }
   });
+} else {
+  console.error('subjectForm not found');
 }
 
 // Create Class form submission
@@ -400,7 +759,7 @@ if (createClassForm) {
 
       const user = auth.currentUser;
       if (user) {
-        const role = await getUserRole(user.email);
+        const role = await getUserRole(user.email, db);
         await loadClasses(user.email, role);
       }
     } catch (error) {
@@ -415,13 +774,57 @@ onAuthStateChanged(auth, async (user) => {
   if (user) {
     userNameEl.textContent = user.displayName || 'User Name:';
     userEmailEl.textContent = user.email;
-    const role = await getUserRole(user.email);
+    const role = await getUserRole(user.email, db);
+    
+    // Store user info in localStorage for immediate restrictions
+    localStorage.setItem('userEmail', user.email);
+    localStorage.setItem('userRole', role || '');
+    
+    // Apply teacher-specific UI layout
+    const contentLayout = document.querySelector('.content-layout');
+    if (role === 'teacher') {
+      if (contentLayout) {
+        contentLayout.classList.add('teacher-layout');
+      }
+      // Add teacher welcome message
+      addTeacherWelcomeMessage(user.displayName || user.email);
+    } else {
+      // Remove immediate restrictions if user is admin
+      const immediateStyle = document.getElementById('immediate-teacher-restrictions');
+      if (immediateStyle) {
+        immediateStyle.remove();
+      }
+      if (contentLayout) {
+        contentLayout.classList.remove('teacher-layout');
+      }
+      // Remove teacher welcome message if it exists
+      const welcomeMessage = document.querySelector('.teacher-welcome');
+      if (welcomeMessage) {
+        welcomeMessage.remove();
+      }
+    }
+    
+    // Apply role-based restrictions
+    applySidebarRestrictions(role);
+    applyPageRestrictions(role, 'classes');
+    
     await loadClasses(user.email, role);
     if (addSubjectFormSection) addSubjectFormSection.style.display = 'none';
     if (subjectsGrid) subjectsGrid.innerHTML = `<p class="muted">Select a class to view its subjects.</p>`;
     await loadTeachersIntoDropdown();
     await loadAcademicYearsIntoDropdown();
   } else {
+    // Clear localStorage on logout
+    localStorage.removeItem('userEmail');
+    localStorage.removeItem('userRole');
+    clearRoleCache();
+    
+    // Reset layout
+    const contentLayout = document.querySelector('.content-layout');
+    if (contentLayout) {
+      contentLayout.classList.remove('teacher-layout');
+    }
+    
     userNameEl.textContent = 'User Name';
     userEmailEl.textContent = 'user@example.com';
     userRoleEl.textContent = 'Role: N/A';

@@ -5,6 +5,7 @@ import {
 import { 
   getAuth, onAuthStateChanged, signOut 
 } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js';
+import { getUserRole, applySidebarRestrictions, applyPageRestrictions } from './role-manager.js';
 
 // Firebase Config
 const firebaseConfig = {
@@ -24,7 +25,6 @@ const auth = getAuth(app);
 // DOM Elements
 const examTitleInput = document.getElementById('examTitle');
 const subjectSelect = document.getElementById('subjectSelect');
-const classSelect = document.getElementById('classSelect');
 const studentIdLengthInput = document.getElementById('studentIdLength');
 const subjectIdLengthInput = document.getElementById('subjectIdLength');
 const totalQuestionsInput = document.getElementById('totalQuestions');
@@ -34,6 +34,7 @@ const pointsConfig = document.getElementById('pointsConfig');
 const sheetPreview = document.getElementById('sheetPreview');
 const answerKeySection = document.getElementById('answerKeySection');
 const answerKeyGrid = document.getElementById('answerKeyGrid');
+const emptyPreview = document.getElementById('emptyPreview');
 
 const userNameEl = document.getElementById('user-name');
 const userEmailEl = document.getElementById('user-email');
@@ -44,6 +45,139 @@ const userDropdown = document.getElementById('userDropdown');
 // Current answer key data
 let currentAnswerKey = {};
 let currentQuestionSetId = null;
+
+// Store subjects and classes data
+let subjectsData = [];
+let classesData = [];
+
+// Check for URL parameters to populate form (for view/edit mode from exam details)
+function loadFromURLParams() {
+  const urlParams = new URLSearchParams(window.location.search);
+  const mode = urlParams.get('mode');
+  
+  if (mode === 'view' || mode === 'edit') {
+    // Store exam ID for editing
+    if (mode === 'edit' && urlParams.get('examId')) {
+      window.currentExamId = urlParams.get('examId');
+      window.currentClassId = urlParams.get('classId');
+      window.currentSubjectId = urlParams.get('subjectId');
+    }
+    
+    // Populate form fields from URL parameters
+    if (examTitleInput && urlParams.get('examTitle')) {
+      examTitleInput.value = urlParams.get('examTitle');
+    }
+    if (totalQuestionsInput && urlParams.get('totalQuestions')) {
+      totalQuestionsInput.value = urlParams.get('totalQuestions');
+    }
+    if (choiceOptionsSelect && urlParams.get('choiceOptions')) {
+      choiceOptionsSelect.value = urlParams.get('choiceOptions');
+    }
+    if (questionsPerColumnInput && urlParams.get('questionsPerColumn')) {
+      questionsPerColumnInput.value = urlParams.get('questionsPerColumn');
+    }
+    if (studentIdLengthInput && urlParams.get('studentIdLength')) {
+      studentIdLengthInput.value = urlParams.get('studentIdLength');
+    }
+    if (subjectIdLengthInput && urlParams.get('subjectIdLength')) {
+      subjectIdLengthInput.value = urlParams.get('subjectIdLength');
+    }
+    
+    // Load subject selection
+    const subjectId = urlParams.get('subjectId');
+    if (subjectId && subjectSelect) {
+      // Wait for subjects to load then set the correct subject
+      const loadSubjectSelection = () => {
+        if (subjectSelect.options.length > 1) {
+          subjectSelect.value = subjectId;
+          console.log('Subject loaded:', subjectId, subjectSelect.options[subjectSelect.selectedIndex]?.text);
+        } else {
+          setTimeout(loadSubjectSelection, 100);
+        }
+      };
+      loadSubjectSelection();
+    }
+    
+    // Load points configuration
+    const pointsConfigParam = urlParams.get('pointsConfig');
+    if (pointsConfigParam) {
+      try {
+        const pointsConfiguration = JSON.parse(pointsConfigParam);
+        // Wait for the points config section to be available
+        setTimeout(() => {
+          loadPointsConfiguration(pointsConfiguration);
+        }, 1000);
+      } catch (error) {
+        console.error('Error parsing points configuration:', error);
+      }
+    }
+    
+    // Load answer key items
+    const answerItemsParam = urlParams.get('answerItems');
+    if (answerItemsParam) {
+      try {
+        const answerItems = JSON.parse(answerItemsParam);
+        // Load answer key items into currentAnswerKey object
+        currentAnswerKey = {};
+        answerItems.forEach(item => {
+          currentAnswerKey[item.number] = item.correctAnswer;
+        });
+        console.log('Loaded answer key from URL:', currentAnswerKey);
+      } catch (error) {
+        console.error('Error parsing answer items:', error);
+      }
+    }
+    
+    // Auto-generate the sheet after ensuring all data is loaded
+    const waitForDataAndGenerate = () => {
+      // Check if subject is loaded (if subjectId was provided)
+      const subjectLoaded = !subjectId || (subjectSelect && subjectSelect.value === subjectId);
+      
+      if (subjectLoaded) {
+        console.log('All data loaded, generating sheet...');
+        generateAnswerSheet();
+      } else {
+        console.log('Waiting for subject to load...');
+        setTimeout(waitForDataAndGenerate, 200);
+      }
+    };
+    
+    // Start the generation process after a base delay
+    setTimeout(waitForDataAndGenerate, 1000);
+  }
+}
+
+// Helper function to load points configuration
+function loadPointsConfiguration(pointsConfiguration) {
+  if (!pointsConfig) return;
+  
+  // Clear existing points configuration
+  pointsConfig.innerHTML = '';
+  
+  // Recreate the points configuration UI from saved data
+  pointsConfiguration.forEach((config, index) => {
+    const pointsRow = document.createElement('div');
+    pointsRow.className = 'points-row';
+    pointsRow.innerHTML = `
+      <label>Questions ${config.start}-${config.end}:</label>
+      <input type="number" class="input range-start" placeholder="From" min="1" style="width: 60px;" value="${config.start}">
+      <span>to</span>
+      <input type="number" class="input range-end" placeholder="To" min="1" style="width: 60px;" value="${config.end}">
+      <span>=</span>
+      <input type="number" class="input points-value" placeholder="Points" min="0.5" step="0.5" value="${config.points}" style="width: 60px;">
+      <span>points</span>
+      <button type="button" class="btn btn-secondary remove-points-row">×</button>
+    `;
+    
+    pointsRow.querySelector('.remove-points-row').addEventListener('click', () => {
+      pointsRow.remove();
+    });
+    
+    pointsConfig.appendChild(pointsRow);
+  });
+  
+  console.log('Loaded points configuration:', pointsConfiguration);
+}
 
 // Toggle user dropdown
 if (userIconBtn) {
@@ -69,66 +203,94 @@ onAuthStateChanged(auth, async (user) => {
       userAvatar.src = user.photoURL;
     }
     
-    const role = await getUserRole(user.email);
+    const role = await getUserRole(user.email, db);
     if (userRoleEl) userRoleEl.textContent = `Role: ${role || 'N/A'}`;
     
-    loadSubjects();
-    loadClasses();
+    // Store user info in localStorage for immediate restrictions
+    localStorage.setItem('userEmail', user.email);
+    localStorage.setItem('userRole', role || '');
+    
+    // Remove immediate restrictions if user is admin
+    if (role !== 'teacher') {
+      const immediateStyle = document.getElementById('immediate-teacher-restrictions');
+      if (immediateStyle) {
+        immediateStyle.remove();
+      }
+    }
+    
+    // Apply role-based restrictions
+    applySidebarRestrictions(role);
+    applyPageRestrictions(role, 'answer-sheet-maker');
+    
+    // Load data using the same logic as classes.js
+    await loadSubjectsWithClasses();
   } else {
+    // Clear localStorage on logout
+    localStorage.removeItem('userEmail');
+    localStorage.removeItem('userRole');
+    
     window.location.href = 'index.html';
   }
 });
 
-// Get user role
-async function getUserRole(email) {
+// Load subjects with their classes using the same logic as classes.js
+async function loadSubjectsWithClasses() {
   try {
-    const usersCol = collection(db, 'users');
-    const q = query(usersCol, where('email', '==', email));
-    const querySnapshot = await getDocs(q);
-    if (querySnapshot.empty) return null;
-    return querySnapshot.docs[0].data().role || null;
-  } catch (err) {
-    console.error('Error getting user role:', err);
-    return null;
-  }
-}
-
-// Load subjects
-async function loadSubjects() {
-  try {
-    const subjectsSnapshot = await getDocs(collection(db, 'subjects'));
+    console.log('Loading subjects with classes using classes.js logic...');
+    
+    // Clear subject select
     subjectSelect.innerHTML = '<option value="">Select Subject</option>';
     
-    subjectsSnapshot.forEach(doc => {
-      const subject = doc.data();
-      const option = document.createElement('option');
-      option.value = subject.subjectId;
-      option.textContent = `${subject.name} (${subject.code})`;
-      subjectSelect.appendChild(option);
+    // First, get all subjects
+    const allSubjectsSnap = await getDocs(collection(db, 'subjects'));
+    const allSubjects = [];
+    allSubjectsSnap.forEach(doc => {
+      allSubjects.push({
+        id: doc.id,
+        ...doc.data()
+      });
     });
-  } catch (error) {
-    console.error('Error loading subjects:', error);
-  }
-}
-
-// Load classes
-async function loadClasses() {
-  try {
-    const classesSnapshot = await getDocs(collection(db, 'classes'));
-    classSelect.innerHTML = '<option value="">Select Class</option>';
     
-    classesSnapshot.forEach(doc => {
-      const classData = doc.data();
-      const option = document.createElement('option');
-      option.value = classData.classId;
-      option.textContent = classData.classId;
-      classSelect.appendChild(option);
+    console.log('All subjects loaded:', allSubjects);
+    
+    // Then, get all class-subject relationships from the classes collection
+    const allClassesSnap = await getDocs(collection(db, 'classes'));
+    const classSubjectMap = new Map(); // Map of subjectId -> classId
+    
+    allClassesSnap.forEach(doc => {
+      const data = doc.data();
+      if (data.subjectId && data.classId) {
+        classSubjectMap.set(data.subjectId, data.classId);
+      }
     });
+    
+    console.log('Class-Subject mapping:', Array.from(classSubjectMap.entries()));
+    
+    // Now populate the subject select with class information
+    allSubjects.forEach(subject => {
+      const classId = classSubjectMap.get(subject.subjectId);
+      
+      if (classId) {
+        const option = document.createElement('option');
+        option.value = subject.subjectId;
+        option.textContent = `${subject.name} (${subject.code || subject.subjectId}) - ${classId}`;
+        option.setAttribute('data-class-id', classId);
+        option.setAttribute('data-class-name', classId);
+        subjectSelect.appendChild(option);
+        
+        console.log(`Added subject: ${subject.name} -> Class: ${classId}`);
+      } else {
+        console.log(`Subject ${subject.name} has no class assignment`);
+      }
+    });
+    
+    console.log('Subject select populated successfully');
+    
   } catch (error) {
-    console.error('Error loading classes:', error);
+    console.error('Error loading subjects with classes:', error);
+    alert('Error loading subjects and classes. Please refresh the page.');
   }
 }
-
 
 // Points configuration management
 document.getElementById('addPointsRow')?.addEventListener('click', addPointsRow);
@@ -138,12 +300,12 @@ function addPointsRow() {
   pointsRow.className = 'points-row';
   pointsRow.innerHTML = `
     <label>Questions</label>
-    <input type="number" class="input range-start" placeholder="From" min="1" style="width: 60px;">
+    <input type="number" class="input range-start" min="1" style="width: 60px;">
     <span>to</span>
-    <input type="number" class="input range-end" placeholder="To" min="1" style="width: 60px;">
+    <input type="number" class="input range-end" min="1" style="width: 60px;">
     <span>=</span>
     <input type="number" class="input points-value" placeholder="Points" min="0.5" step="0.5" value="1" style="width: 60px;">
-    <span>points</span>
+    <span class="points-text">points</span>
     <button type="button" class="btn btn-secondary remove-points-row">×</button>
   `;
   
@@ -170,14 +332,41 @@ document.addEventListener('click', (e) => {
 document.getElementById('generateSheet')?.addEventListener('click', generateAnswerSheet);
 
 function generateAnswerSheet() {
+  // Validate subject selection before generating
+  const subjectId = subjectSelect?.value;
+  if (!subjectId) {
+    alert('Please select a subject before generating the answer sheet.');
+    return;
+  }
+
+  // Hide empty preview and show action buttons
+  if (emptyPreview) {
+    emptyPreview.style.display = 'none';
+  }
+  
+  // Show action buttons in preview header
+  const actionButtons = document.querySelectorAll('.preview-header .btn');
+  actionButtons.forEach(btn => btn.style.display = 'inline-flex');
+  
   const examTitle = examTitleInput?.value || 'Examination';
   const totalQuestions = parseInt(totalQuestionsInput?.value) || 30;
   const choiceCount = parseInt(choiceOptionsSelect?.value) || 4;
   const questionsPerColumn = parseInt(questionsPerColumnInput?.value) || 15;
-  const selectedSubject = subjectSelect?.options[subjectSelect.selectedIndex]?.text || '';
-  const selectedClass = classSelect?.value || '';
+  
+  // Fix subject selection - get both value and text properly
+  let selectedSubject = '';
+  if (subjectSelect && subjectSelect.selectedIndex >= 0 && subjectSelect.value) {
+    selectedSubject = subjectSelect.options[subjectSelect.selectedIndex].text;
+  }
+  
   const studentIdLength = parseInt(studentIdLengthInput?.value) || 8;
   const subjectIdLength = parseInt(subjectIdLengthInput?.value) || 0;
+  
+  // Debug logging to check subject selection
+  console.log('Subject Select Element:', subjectSelect);
+  console.log('Selected Index:', subjectSelect?.selectedIndex);
+  console.log('Selected Value:', subjectSelect?.value);
+  console.log('Selected Subject Text:', selectedSubject);
   
   // Validate student ID length (mandatory)
   if (studentIdLength < 1 || studentIdLength > 15) {
@@ -198,6 +387,10 @@ function generateAnswerSheet() {
   const scannerStartMarker = '<div class="scanner-marker"></div>'.repeat(5);
   const scannerEndMarker = '<div class="scanner-marker"></div>'.repeat(5);
   
+  // Get class name from selected subject
+  const selectedOption = subjectSelect?.options[subjectSelect?.selectedIndex];
+  const className = selectedOption ? selectedOption.getAttribute('data-class-name') : '';
+  
   // Generate answer sheet HTML
   let sheetHTML = `
     <div class="sheet-header">
@@ -205,8 +398,7 @@ function generateAnswerSheet() {
         ${scannerStartMarker}
         <div style="text-align: center; flex: 1;">
           <h2 style="margin: 0; font-size: 18px;">${examTitle}</h2>
-          <p style="margin: 5px 0; font-size: 14px;">${selectedSubject}</p>
-          ${selectedClass ? `<p style="margin: 5px 0; font-size: 12px;">Class: ${selectedClass}</p>` : ''}
+          ${selectedSubject ? `<p style="margin: 5px 0; font-size: 14px; font-weight: bold;">${selectedSubject}</p>` : ''}
         </div>
         ${scannerStartMarker}
       </div>
@@ -218,8 +410,7 @@ function generateAnswerSheet() {
         <strong>Date:</strong> ________________________________
       </div>
       <div>
-        <strong>Section:</strong> ________________________________<br><br>
-        <strong>Signature:</strong> ________________________________
+        <!-- Removed Section and Signature fields -->
       </div>
     </div>
   `;
@@ -230,13 +421,29 @@ function generateAnswerSheet() {
   // Generate questions section
   sheetHTML += `<div class="questions-grid">`;
   
+  // Determine optimal layout based on question count - ALWAYS override the input field
+  let actualQuestionsPerColumn;
+  
+  // For high question counts, adjust columns to fit better on one page
+  if (totalQuestions > 50) {
+    actualQuestionsPerColumn = Math.ceil(totalQuestions / 4); // 4 columns max
+  } else if (totalQuestions > 30) {
+    actualQuestionsPerColumn = Math.ceil(totalQuestions / 3); // 3 columns max
+  } else if (totalQuestions > 15) {
+    actualQuestionsPerColumn = Math.ceil(totalQuestions / 2); // 2 columns max
+  } else {
+    actualQuestionsPerColumn = totalQuestions; // Single column for very few questions
+  }
+  
+  console.log(`Total Questions: ${totalQuestions}, Questions per Column: ${actualQuestionsPerColumn}, Columns: ${Math.ceil(totalQuestions / actualQuestionsPerColumn)}`);
+  
   // Generate questions in columns
-  const columns = Math.ceil(totalQuestions / questionsPerColumn);
+  const columns = Math.ceil(totalQuestions / actualQuestionsPerColumn);
   for (let col = 0; col < columns; col++) {
     sheetHTML += '<div class="question-column">';
     
-    const startQuestion = col * questionsPerColumn + 1;
-    const endQuestion = Math.min(startQuestion + questionsPerColumn - 1, totalQuestions);
+    const startQuestion = col * actualQuestionsPerColumn + 1;
+    const endQuestion = Math.min(startQuestion + actualQuestionsPerColumn - 1, totalQuestions);
     
     for (let q = startQuestion; q <= endQuestion; q++) {
       const points = getPointsForQuestion(q, pointsRanges);
@@ -244,11 +451,13 @@ function generateAnswerSheet() {
       sheetHTML += `
         <div class="question-row">
           <span class="question-number">${q}.</span>
-          ${choices.map(choice => `
-            <span class="choice-bubble" data-question="${q}" data-choice="${choice}"></span>
-            <span>${choice}</span>
-          `).join('')}
-          <span class="points-display">(${points} pt${points !== 1 ? 's' : ''})</span>
+          <div class="question-choices">
+            ${choices.map(choice => `
+              <span class="choice-bubble" data-question="${q}" data-choice="${choice}"></span>
+              <span>${choice}</span>
+            `).join('')}
+            <span class="points-display">(${points} pt${points !== 1 ? 's' : ''})</span>
+          </div>
         </div>
       `;
     }
@@ -261,8 +470,7 @@ function generateAnswerSheet() {
     <div style="margin-top: 30px; text-align: center; display: flex; justify-content: space-between; align-items: center;">
       ${scannerEndMarker}
       <div style="flex: 1; text-align: center;">
-        <strong>END OF ANSWER SHEET</strong><br>
-        <small>Total Questions: ${totalQuestions} | Total Points: ${calculateTotalPoints(pointsRanges, totalQuestions)}</small>
+        <!-- End section removed -->
       </div>
       ${scannerEndMarker}
     </div>
@@ -317,9 +525,6 @@ function generateIdSections(studentIdLength, subjectIdLength) {
         </div>
       </div>
     `;
-  } else {
-    // Add empty section to maintain grid layout
-    idHTML += '<div class="id-section" style="opacity: 0.3;"><h4>Subject ID Disabled</h4><p style="font-size: 12px;">Set length > 0 to enable</p></div>';
   }
   
   idHTML += '</div>';
@@ -423,29 +628,41 @@ function handleAnswerKeyBubbleClick(event, questionNumber, choice) {
   console.log('Current Answer Key:', currentAnswerKey);
 }
 
-// ✅ FIXED: Allow saving exams without answer keys
+// ✅ FIXED: Proper validation and saving
 async function saveTemplate() {
-  const examTitle = examTitleInput?.value || 'Examination';
+  const examTitle = examTitleInput?.value?.trim();
   const subjectId = subjectSelect?.value;
-  const classId = classSelect?.value;
   const totalQuestions = parseInt(totalQuestionsInput?.value) || 30;
   const studentIdLength = parseInt(studentIdLengthInput?.value) || 8;
   const subjectIdLength = parseInt(subjectIdLengthInput?.value) || 0;
 
-  // Basic validation - only require title, subject, and class
-  if (!examTitle.trim()) {
+  console.log('Save validation - Subject ID:', subjectId);
+
+  // Basic validation - only require title and subject
+  if (!examTitle) {
     alert('Please enter an exam title.');
     return;
   }
 
-  if (!subjectId || !classId) {
-    alert('Please select both subject and class.');
+  if (!subjectId) {
+    alert('Please select a subject.');
     return;
   }
 
   // Validate student ID length (mandatory)
   if (studentIdLength < 1 || studentIdLength > 15) {
     alert('Student ID length must be between 1 and 15 digits.');
+    return;
+  }
+
+  // Get the class ID from the selected subject
+  const selectedOption = subjectSelect.options[subjectSelect.selectedIndex];
+  const classId = selectedOption ? selectedOption.getAttribute('data-class-id') : '';
+  
+  console.log('Final class ID for saving:', classId);
+
+  if (!classId) {
+    alert('Unable to determine class for selected subject. Please try again.');
     return;
   }
 
@@ -461,16 +678,20 @@ async function saveTemplate() {
   }
 
   try {
-    // Generate unique ID for this exam
-    currentQuestionSetId = `qset_${Date.now()}`;
+    // Use existing exam ID if editing, otherwise generate new one
+    if (window.currentExamId) {
+      currentQuestionSetId = window.currentExamId;
+    } else {
+      currentQuestionSetId = `qset_${Date.now()}`;
+    }
 
     // ✅ Complete exam document data with all necessary fields
     const examData = {
       // Primary identifiers
       examId: currentQuestionSetId,
-      examTitle: examTitle.trim(),
-      name: examTitle.trim(), // Alternative field name for compatibility
-      title: examTitle.trim(), // Another alternative field name
+      examTitle: examTitle,
+      name: examTitle, // Alternative field name for compatibility
+      title: examTitle, // Another alternative field name
       
       // Course/Class information
       subjectId,
@@ -493,6 +714,9 @@ async function saveTemplate() {
       // Points configuration
       pointsConfiguration: getPointsConfiguration(),
       
+      // Store the actual generated answer sheet HTML
+      generatedSheetHTML: sheetPreview ? sheetPreview.outerHTML : '',
+      
       // Metadata
       createdBy: auth.currentUser?.email,
       creator: auth.currentUser?.email, // Alternative field name
@@ -506,15 +730,40 @@ async function saveTemplate() {
       version: '1.0'
     };
 
+    console.log('Saving exam data:', examData);
+
     if (auth.currentUser) {
       // Save to Firebase 'exams' collection
       await setDoc(doc(db, 'exams', currentQuestionSetId), examData);
       
-      const message = items.length > 0 
-        ? `Exam saved successfully with ${items.length} answer(s)! Redirecting to dashboard...`
-        : 'Exam saved successfully without answer key! You can add answers later. Redirecting to dashboard...';
+      const isEditing = window.currentExamId;
+      const message = isEditing 
+        ? `Exam updated successfully! ${items.length > 0 ? `Updated with ${items.length} answer(s).` : 'Updated without answer key.'}`
+        : items.length > 0 
+          ? `Exam saved successfully with ${items.length} answer(s)! Redirecting to dashboard...`
+          : 'Exam saved successfully without answer key! You can add answers later. Redirecting to dashboard...';
       
       alert(message);
+      
+      // If editing, notify parent window and close
+      if (isEditing && window.opener) {
+        try {
+          // Send message to parent window to refresh exam details
+          window.opener.postMessage({
+            type: 'examUpdated',
+            examId: currentQuestionSetId,
+            examData: examData
+          }, '*');
+        } catch (e) {
+          console.log('Could not notify parent window:', e);
+        }
+        
+        // Close the editing window after a short delay
+        setTimeout(() => {
+          window.close();
+        }, 1000);
+        return;
+      }
       
       // Redirect to dashboard to show the new exam card
       window.location.href = 'dashboard.html';
@@ -556,7 +805,17 @@ document.getElementById('clearAnswerKey')?.addEventListener('click', () => {
 
 // Print functionality
 document.getElementById('printSheet')?.addEventListener('click', () => {
-  window.print();
+  // Check if answer sheet is generated
+  const sheetPreview = document.getElementById('sheetPreview');
+  if (!sheetPreview || sheetPreview.style.display === 'none' || !sheetPreview.innerHTML.trim()) {
+    alert('Please generate the answer sheet first before printing.');
+    return;
+  }
+  
+  // Add a small delay to ensure the print styles are applied
+  setTimeout(() => {
+    window.print();
+  }, 100);
 });
 
 // Export PDF (basic implementation)
@@ -575,6 +834,11 @@ totalQuestionsInput?.addEventListener('change', () => {
     const endInput = firstRow.querySelector('.range-end');
     if (endInput) endInput.value = totalQuestions;
   }
+});
+
+// Initialize URL params loading when page loads
+document.addEventListener('DOMContentLoaded', () => {
+  loadFromURLParams();
 });
 
 // Validate student ID length
