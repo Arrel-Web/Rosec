@@ -6,6 +6,9 @@ class EnhancedFeaturesLoader {
       backupRestore: null
     };
     
+    // Disable notifications permanently
+    localStorage.setItem('rosec-enhanced-features-seen', 'true');
+    
     this.loadFeatures();
   }
 
@@ -39,8 +42,8 @@ class EnhancedFeaturesLoader {
       await this.initializeThemeManager();
       await this.initializeBackupRestore();
       
-      // Show welcome notification
-      this.showWelcomeNotification();
+      // Welcome notification disabled
+      // this.showWelcomeNotification();
       
       console.log('✅ Enhanced features loaded successfully!');
     } catch (error) {
@@ -72,67 +75,8 @@ class EnhancedFeaturesLoader {
   }
 
   showWelcomeNotification() {
-    // Don't show on login page
-    if (window.location.pathname.includes('index.html') || window.location.pathname === '/') {
-      return;
-    }
-
-    // Check if user has seen the welcome message
-    if (localStorage.getItem('rosec-enhanced-features-seen')) {
-      return;
-    }
-
-    setTimeout(() => {
-      const notification = document.createElement('div');
-      notification.className = 'enhanced-features-welcome';
-      notification.innerHTML = `
-        <div class="welcome-content">
-          <div class="welcome-header">
-            <i class="fa-solid fa-sparkles"></i>
-            <h4>New Features Available!</h4>
-            <button class="welcome-close" onclick="this.closest('.enhanced-features-welcome').remove()">
-              <i class="fa-solid fa-times"></i>
-            </button>
-          </div>
-          <div class="welcome-body">
-            <p>Rosec has been enhanced with new features:</p>
-            <ul class="features-list">
-              <li><i class="fa-solid fa-moon"></i> <strong>Dark Mode</strong> - Toggle with the theme button</li>
-              <li><i class="fa-solid fa-shield-halved"></i> <strong>Backup & Restore</strong> - Protect your data</li>
-            </ul>
-          </div>
-          <div class="welcome-footer">
-            <button class="btn btn-primary" onclick="this.closest('.enhanced-features-welcome').remove(); localStorage.setItem('rosec-enhanced-features-seen', 'true');">
-              Got it!
-            </button>
-          </div>
-        </div>
-      `;
-      
-      notification.style.cssText = `
-        position: fixed;
-        top: 0;
-        left: 0;
-        right: 0;
-        bottom: 0;
-        background: rgba(0,0,0,0.8);
-        z-index: 10002;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        animation: fadeIn 0.3s ease;
-      `;
-      
-      document.body.appendChild(notification);
-      
-      // Auto-remove after 30 seconds
-      setTimeout(() => {
-        if (notification.parentNode) {
-          notification.remove();
-          localStorage.setItem('rosec-enhanced-features-seen', 'true');
-        }
-      }, 30000);
-    }, 2000);
+    // Notification disabled - no longer showing new features popup
+    return;
   }
 
   // Public API

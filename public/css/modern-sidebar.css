@@ -111,9 +111,9 @@
 
 /* Modern Hamburger Toggle Button */
 .sidebar-toggle {
-  position: absolute;
+  position: fixed;
   top: 32px;
-  right: -20px;
+  left: 240px;
   background: linear-gradient(135deg, #ffffff, #f8fafc);
   color: #1a73e8;
   border: none;
@@ -127,7 +127,7 @@
   justify-content: center;
   gap: 3px;
   box-shadow: 0 6px 24px rgba(26, 115, 232, 0.25), 0 2px 8px rgba(0, 0, 0, 0.1);
-  transition: all 0.3s ease;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   z-index: 1002;
   border: 2px solid rgba(26, 115, 232, 0.3);
   backdrop-filter: blur(10px);
@@ -168,7 +168,7 @@
 
 /* Collapsed State */
 .sidebar.collapsed .sidebar-toggle {
-  right: -20px;
+  left: 40px;
   background: linear-gradient(135deg, #1a73e8, #4285f4);
   border-color: rgba(255, 255, 255, 0.3);
 }
@@ -507,6 +507,16 @@
   .sidebar.collapsed + .main-area {
     margin-left: 0;
     width: 100%;
+  }
+  
+  /* Mobile toggle button positioning */
+  .sidebar-toggle {
+    left: 20px !important;
+    top: 20px;
+  }
+  
+  .sidebar.collapsed .sidebar-toggle {
+    left: 20px !important;
   }
   
   .mobile-overlay {

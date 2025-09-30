@@ -8,13 +8,13 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" />
   <link rel="stylesheet" href="css/user-profile.css" />
   <link rel="stylesheet" href="css/enhanced-topbar.css">
+  <link rel="stylesheet" href="css/mobile-enhancements.css">
   <style>
     .main-area {
       padding: 20px;
-      min-height: 100vh;
+      min-height: calc(100vh - 100px);
       background: linear-gradient(180deg,#fafafa,#f1f3f4);
-      display: block !important;
-      flex: none !important;
+      margin-top: 20px;
     }
     
     /* Student action button hover effects - matching export/import style */
@@ -36,51 +36,22 @@
       box-shadow: 0 0 0 2px rgba(26,115,232,0.25);
     }
     .container { 
-      width: 1200px; 
-      max-width: 1200px; 
-      margin: 0 auto; 
-      padding: 0;
+      max-width: none; 
+      margin: 0; 
+      padding: 0 28px;
       box-sizing: border-box;
-    }
-    
-    .header {
-      width: 1200px !important;
-      max-width: 1200px !important;
-      margin: 0 auto !important;
-      box-sizing: border-box !important;
-      padding-left: 0 !important;
-      padding-right: 0 !important;
     }
     
     .card { 
       background: white; 
       border-radius: 12px; 
       box-shadow: 0 2px 8px rgba(0,0,0,0.1); 
-      margin-bottom: 20px; 
+      margin-bottom: 8px; 
       border: 1px solid #e8eaed;
       width: 100%;
       box-sizing: border-box;
       margin-left: 0 !important;
       margin-right: 0 !important;
-    }
-    .topbar {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      padding: 22px 28px;
-      background: transparent;
-      margin-bottom: 20px;
-    }
-    .topbar h1 { 
-      font-size: 28px; 
-      font-weight: 600; 
-      color: #202124; 
-      margin: 0; 
-    }
-    .topbar .meta { 
-      color: #5f6368; 
-      font-size: 14px; 
-      margin-top: 4px;
     }
     .controls { 
       display: grid; 
@@ -196,106 +167,70 @@
       background: #e8f0fe;
       color: #1967d2;
     }
-    .user-dropdown {
-      position: absolute;
-      right: 0;
-      top: 100%;
-      background: #fff;
-      border: 1px solid #ccc;
-      border-radius: 8px;
-      width: 220px;
-      padding: 12px;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-      display: none;
-      z-index: 1000;
-    }
-    .user-dropdown.show { display: block !important; }
-    .divider { height: 1px; background: #eee; margin: 8px 0; }
-    .top-actions .user { position: relative; }
-    .user-btn {
-      background: transparent !important;
-      border: 0 !important;
-      padding: 0 !important;
-      cursor: pointer !important;
-      border-radius: 50% !important;
-      width: 56px !important;
-      height: 56px !important;
-      display: flex !important;
-      align-items: center !important;
-      justify-content: center !important;
-    }
-    .user-btn img#userAvatar {
-      width: 100% !important;
-      height: 100% !important;
-      border-radius: 50% !important;
-      object-fit: cover !important;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.2) !important;
-      display: block !important;
-    }
   </style>
 </head>
 <body>
-  <div class="main-area">
-    <header class="header">
-        <div class="header-left">
-          <div class="header-navigation">
-            <button class="nav-btn" onclick="history.back()" title="Go Back">
-              <i class="fa-solid fa-arrow-left"></i>
-            </button>
-            <button class="nav-btn" onclick="window.location.href='dashboard.html'" title="Dashboard">
-              <i class="fa-solid fa-house"></i>
-            </button>
+  <header class="header">
+    <div class="header-left">
+      <div class="header-navigation">
+        <button class="nav-btn" onclick="history.back()" title="Go Back">
+          <i class="fa-solid fa-arrow-left"></i>
+        </button>
+        <button class="nav-btn" onclick="window.location.href='dashboard.html'" title="Dashboard">
+          <i class="fa-solid fa-house"></i>
+        </button>
+      </div>
+      <div class="header-title">
+        <h1>Student Grades</h1>
+        <p>View student grades and performance</p>
+      </div>
+    </div>
+    
+    <div class="user-section">
+      <div class="user-profile">
+        <button id="userIconBtn" class="user-profile-btn">
+          <div class="user-avatar">
+            <i class="fa-solid fa-user"></i>
           </div>
-          <div class="header-title">
-            <h1>Student Grades</h1>
-            <p>View student grades and performance</p>
+          <div class="user-info">
+            <span class="user-name" id="userNameDisplay">Loading...</span>
+            <span class="user-role-badge" id="userRoleBadge">User</span>
           </div>
-        </div>
-        
-        <div class="user-section">
-          <div class="user-profile">
-            <button id="userIconBtn" class="user-profile-btn">
-              <div class="user-avatar">
-                <i class="fa-solid fa-user"></i>
-              </div>
-              <div class="user-info">
-                <span class="user-name" id="userNameDisplay">Loading...</span>
-                <span class="user-role-badge" id="userRoleBadge">User</span>
-              </div>
-              <i class="fa-solid fa-chevron-down dropdown-arrow"></i>
-            </button>
-            <div id="userDropdown" class="user-dropdown">
-              <div class="dropdown-header">
-                <div class="dropdown-avatar">
-                  <i class="fa-solid fa-user"></i>
-                </div>
-                <div class="dropdown-user-info">
-                  <div class="dropdown-name" id="user-name">User Name</div>
-                  <div class="dropdown-email" id="user-email">user@example.com</div>
-                  <div class="dropdown-role" id="user-role">Role: Loading...</div>
-                </div>
-              </div>
-              <div class="dropdown-divider"></div>
-              <div class="dropdown-menu">
-                <button class="dropdown-item" id="profileBtn">
-                  <i class="fa-solid fa-user-circle"></i>
-                  <span>Profile</span>
-                </button>
-                <button class="dropdown-item" id="settingsBtn">
-                  <i class="fa-solid fa-cog"></i>
-                  <span>Settings</span>
-                </button>
-                <div class="dropdown-divider"></div>
-                <button class="dropdown-item danger" id="signOutBtn">
-                  <i class="fa-solid fa-sign-out-alt"></i>
-                  <span>Sign Out</span>
-                </button>
-              </div>
+          <i class="fa-solid fa-chevron-down dropdown-arrow"></i>
+        </button>
+        <div id="userDropdown" class="user-dropdown">
+          <div class="dropdown-header">
+            <div class="dropdown-avatar">
+              <i class="fa-solid fa-user"></i>
+            </div>
+            <div class="dropdown-user-info">
+              <div class="dropdown-name" id="user-name">User Name</div>
+              <div class="dropdown-email" id="user-email">user@example.com</div>
+              <div class="dropdown-role" id="user-role">Role: Loading...</div>
             </div>
           </div>
+          <div class="dropdown-divider"></div>
+          <div class="dropdown-menu">
+            <button class="dropdown-item" id="profileBtn">
+              <i class="fa-solid fa-user-circle"></i>
+              <span>Profile</span>
+            </button>
+            <button class="dropdown-item" id="settingsBtn">
+              <i class="fa-solid fa-cog"></i>
+              <span>Settings</span>
+            </button>
+            <div class="dropdown-divider"></div>
+            <button class="dropdown-item danger" id="signOutBtn">
+              <i class="fa-solid fa-sign-out-alt"></i>
+              <span>Sign Out</span>
+            </button>
+          </div>
         </div>
-      </header>
+      </div>
+    </div>
+  </header>
 
+  <div class="main-area">
     <div class="container">
       <!-- Filters Card -->
     <div class="card">
@@ -411,6 +346,7 @@
   </div>
 
   <script src="js/user-profile.js"></script>
+  <script src="js/mobile-enhancements.js"></script>
   <script type="module">
     // Import Firebase modules for user-profile.js to work properly
     import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js';

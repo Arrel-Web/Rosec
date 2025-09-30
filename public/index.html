@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=0.8">
   
   <!-- SEO Meta Tags -->
   <title>Rosec - Smart Answer Sheet Scanner & Exam Management System</title>
@@ -41,6 +41,8 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   
+  <!-- Mobile Enhancements -->
+  <link rel="stylesheet" href="css/mobile-enhancements.css">
     
   <!-- Schema.org structured data -->
   <script type="application/ld+json">
@@ -661,6 +663,135 @@
       }
     }
 
+    /* Enhanced mobile interactions */
+    @media (max-width: 768px) {
+      /* Better touch targets */
+      .js-toggle-login,
+      .login--login-submit {
+        min-height: 44px;
+        min-width: 44px;
+        touch-action: manipulation;
+      }
+
+      /* Improved form accessibility */
+      input[type="email"],
+      input[type="password"] {
+        font-size: 16px; /* Prevents zoom on iOS */
+        -webkit-text-size-adjust: 100%;
+      }
+
+      /* Enhanced character animation for mobile */
+      .character {
+        cursor: pointer;
+        transition: transform 0.3s ease;
+      }
+
+      .character:active {
+        transform: translateX(-50%) scale(0.95);
+      }
+
+      /* Better error message positioning */
+      #error-message {
+        position: relative;
+        margin-top: 15px;
+        padding: 8px 12px;
+        background: rgba(255, 71, 87, 0.1);
+        border-radius: 6px;
+        border: 1px solid rgba(255, 71, 87, 0.3);
+      }
+
+      /* Improved floating icons for mobile */
+      .floating-icon {
+        font-size: 1.2rem !important;
+        animation-duration: 15s;
+      }
+
+      /* Better loading states */
+      .login--login-submit:disabled {
+        opacity: 0.7;
+        cursor: not-allowed;
+      }
+
+      /* Enhanced focus states */
+      input:focus,
+      button:focus {
+        outline: 2px solid #1a73e8;
+        outline-offset: 2px;
+      }
+    }
+
+    /* Landscape mobile optimization */
+    @media (max-width: 768px) and (orientation: landscape) {
+      .character {
+        top: 5% !important;
+        right: 5% !important;
+        left: auto !important;
+        transform: none !important;
+        width: 50px !important;
+        height: 50px !important;
+        z-index: 1 !important;
+      }
+
+      .login--container {
+        height: 220px !important;
+        top: 50% !important;
+        left: 30% !important;
+        transform: translate(-50%, -50%) !important;
+      }
+
+      .login--container.login--active {
+        height: 260px !important;
+        left: 50% !important;
+        transform: translate(-50%, -50%) !important;
+      }
+
+      .brand-header {
+        top: 8px !important;
+        left: 8px !important;
+      }
+
+      .floating-icon {
+        font-size: 0.8rem !important;
+      }
+
+      /* Ensure character doesn't overlap login form */
+      .login--container.login--active ~ .character {
+        right: 8px !important;
+        top: 8px !important;
+        width: 40px !important;
+        height: 40px !important;
+      }
+    }
+
+    /* High contrast mode support */
+    @media (prefers-contrast: high) {
+      .login--container,
+      .login--toggle-container {
+        border: 2px solid #000;
+      }
+
+      .login--login-submit,
+      .js-toggle-login {
+        border: 2px solid #000;
+      }
+    }
+
+    /* Reduced motion support */
+    @media (prefers-reduced-motion: reduce) {
+      .character,
+      .floating-icon,
+      .login--container,
+      .login--toggle-container {
+        animation: none;
+        transition: none;
+      }
+
+      body::before,
+      body::after {
+        animation: none;
+      }
+    }
+
     /* Landscape orientation adjustments */
     @media (max-width: 768px) and (orientation: landscape) {
       .character {
@@ -1052,5 +1183,8 @@
       }, 3000);
     });
   </script>
+  
+  <!-- Mobile Enhancements JavaScript -->
+  <script src="js/mobile-enhancements.js"></script>
   </body>
 </html>

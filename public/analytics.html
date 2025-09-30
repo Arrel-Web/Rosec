@@ -2,14 +2,15 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=0.8">
   <title>Analytics Dashboard - Rosec</title>
   <link rel="stylesheet" href="styles.css">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
   <link rel="stylesheet" href="css/modern-sidebar.css">
   <link rel="stylesheet" href="css/user-profile.css">
   <link rel="stylesheet" href="css/enhanced-topbar.css">
-  <link rel="stylesheet" href="css/enhanced-features.css">
+  <link rel="stylesheet" href="css/enhanced-features.css" />
+  <link rel="stylesheet" href="css/mobile-enhancements.css" />
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <style>
     .layout {
@@ -18,29 +19,28 @@
     
     
     
-    .sidebar.collapsed 
+    /* Sidebar collapsed states - properly defined */
+    .sidebar.collapsed {
+      width: 60px;
+    }
     
+    .sidebar.collapsed .nav-text {
+      display: none;
+    }
     
-    .sidebar.collapsed 
+    .sidebar.collapsed .sidebar-brand {
+      justify-content: center;
+    }
     
-    
-    .sidebar.collapsed 
-    
-    .sidebar.collapsed 
-    
-    
-    .sidebar.collapsed 
-    
-    /* Tooltip for collapsed sidebar */
-    .sidebar.collapsed 
-    .sidebar.collapsed 
-    .sidebar.collapsed 
+    .sidebar.collapsed .sidebar-title {
+      display: none;
+    } 
     .main-area {
       position: relative;
-      padding: 20px;
+      padding: 0 20px 20px 20px;
       margin-left: 280px;
       min-height: 100vh;
-      background: #f8f9fa;
+      background: #ffffff;
       width: 100%;
       box-sizing: border-box;
       transition: margin-left 0.3s ease;
@@ -52,8 +52,10 @@
       justify-content: space-between;
       align-items: center;
       margin-bottom: 30px;
+      margin-top: 0;
       flex-wrap: wrap;
       gap: 15px;
+      padding-top: 0;
     }
 
     .date-filter {
@@ -506,7 +508,7 @@
       </header>
 
       <!-- Analytics Content -->
-      <div class="content-padding">
+      <div class="content-padding" style="padding-top: 40px;">
         <!-- Analytics Header -->
         <div class="analytics-header">
           <div>
@@ -531,8 +533,8 @@
         </div>
 
         <!-- Statistics Cards -->
-        <div class="grid grid-cols-4">
-        <div class="card stats-card">
+        <div class="stats-grid">
+        <div class="stat-card">
           <div class="stat-header">
             <div>
               <div class="stat-value" id="totalExams">0</div>
@@ -548,7 +550,7 @@
           </div>
         </div>
 
-        <div class="card stats-card">
+        <div class="stat-card success">
           <div class="stat-header">
             <div>
               <div class="stat-value" id="avgScore">0%</div>
@@ -564,7 +566,7 @@
           </div>
         </div>
 
-        <div class="card stats-card">
+        <div class="stat-card warning">
           <div class="stat-header">
             <div>
               <div class="stat-value" id="totalStudents">0</div>
@@ -580,7 +582,7 @@
           </div>
         </div>
 
-        <div class="card stats-card">
+        <div class="stat-card info">
           <div class="stat-header">
             <div>
               <div class="stat-value" id="passRate">0%</div>
@@ -598,8 +600,8 @@
       </div>
 
       <!-- Charts Section -->
-      <div class="grid grid-cols-2">
-        <div class="card">
+      <div class="charts-grid">
+        <div class="chart-card">
           <div class="chart-header">
             <h3 class="chart-title">Score Trends</h3>
             <select id="trendPeriod">
@@ -613,7 +615,7 @@
           </div>
         </div>
 
-        <div class="card">
+        <div class="chart-card">
           <div class="chart-header">
             <h3 class="chart-title">Grade Distribution</h3>
           </div>
@@ -624,8 +626,8 @@
       </div>
 
       <!-- Performance Analysis -->
-      <div class="grid grid-cols-2">
-        <div class="card">
+      <div class="performance-grid">
+        <div class="performance-card">
           <div class="chart-header">
             <h3 class="chart-title">Top Performing Classes</h3>
           </div>
@@ -634,7 +636,7 @@
           </ul>
         </div>
 
-        <div class="card">
+        <div class="performance-card">
           <div class="chart-header">
             <h3 class="chart-title">Subject Performance</h3>
           </div>
@@ -715,6 +717,7 @@
   </script>
   <script type="module" src="js/sidebar-toggle.js"></script>
   <script type="module" src="js/theme-manager.js"></script>
+  <script src="js/mobile-enhancements.js"></script>
   <script type="module" src="js/analytics.js"></script>
 </body>
 </html>
