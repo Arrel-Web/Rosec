@@ -328,14 +328,14 @@ document.addEventListener('click', (e) => {
   }
 });
 
-// Generate answer sheet
-document.getElementById('generateSheet')?.addEventListener('click', generateAnswerSheet);
+// Generate answer key configuration (no visual sheet needed)
+document.getElementById('generateSheet')?.addEventListener('click', generateAnswerKeyConfig);
 
-function generateAnswerSheet() {
+function generateAnswerKeyConfig() {
   // Validate subject selection before generating
   const subjectId = subjectSelect?.value;
   if (!subjectId) {
-    alert('Please select a subject before generating the answer sheet.');
+    alert('Please select a subject before generating the answer key.');
     return;
   }
 
@@ -348,188 +348,87 @@ function generateAnswerSheet() {
   const actionButtons = document.querySelectorAll('.preview-header .btn');
   actionButtons.forEach(btn => btn.style.display = 'inline-flex');
   
-  const examTitle = examTitleInput?.value || 'Examination';
-  const totalQuestions = parseInt(totalQuestionsInput?.value) || 30;
-  const choiceCount = parseInt(choiceOptionsSelect?.value) || 4;
-  const questionsPerColumn = parseInt(questionsPerColumnInput?.value) || 15;
-  
-  // Fix subject selection - get both value and text properly
-  let selectedSubject = '';
-  if (subjectSelect && subjectSelect.selectedIndex >= 0 && subjectSelect.value) {
-    selectedSubject = subjectSelect.options[subjectSelect.selectedIndex].text;
-  }
-  
-  const studentIdLength = parseInt(studentIdLengthInput?.value) || 8;
-  const subjectIdLength = parseInt(subjectIdLengthInput?.value) || 0;
-  
-  // Debug logging to check subject selection
-  console.log('Subject Select Element:', subjectSelect);
-  console.log('Selected Index:', subjectSelect?.selectedIndex);
-  console.log('Selected Value:', subjectSelect?.value);
-  console.log('Selected Subject Text:', selectedSubject);
-  
-  // Validate student ID length (mandatory)
-  if (studentIdLength < 1 || studentIdLength > 15) {
-    alert('Student ID length must be between 1 and 15 digits.');
-    return;
-  }
+  // Fixed values
+  const totalQuestions = 30;
+  const choices = ['A', 'B', 'C', 'D'];
   
   // Get points configuration
   const pointsRanges = getPointsConfiguration();
   
-  // Generate choice letters
-  const choices = [];
-  for (let i = 0; i < choiceCount; i++) {
-    choices.push(String.fromCharCode(65 + i)); // A, B, C, D, E
-  }
-  
-  // Generate scanner start/end markers
-  const scannerStartMarker = '<div class="scanner-marker"></div>'.repeat(5);
-  const scannerEndMarker = '<div class="scanner-marker"></div>'.repeat(5);
-  
-  // Get class name from selected subject
-  const selectedOption = subjectSelect?.options[subjectSelect?.selectedIndex];
-  const className = selectedOption ? selectedOption.getAttribute('data-class-name') : '';
-  
-  // Generate answer sheet HTML
-  let sheetHTML = `
-    <div class="sheet-header">
-      <div style="display: flex; justify-content: space-between; align-items: center;">
-        ${scannerStartMarker}
-        <div style="text-align: center; flex: 1;">
-          <h2 style="margin: 0; font-size: 18px;">${examTitle}</h2>
-          ${selectedSubject ? `<p style="margin: 5px 0; font-size: 14px; font-weight: bold;">${selectedSubject}</p>` : ''}
-        </div>
-        ${scannerStartMarker}
-      </div>
-    </div>
-    
-    <div class="student-info">
-      <div>
-        <strong>Name:</strong> ________________________________<br><br>
-        <strong>Date:</strong> ________________________________
-      </div>
-      <div>
-        <!-- Removed Section and Signature fields -->
-      </div>
-    </div>
-  `;
-  
-  // Add ID sections
-  sheetHTML += generateIdSections(studentIdLength, subjectIdLength);
-  
-  // Generate questions section
-  sheetHTML += `<div class="questions-grid">`;
-  
-  // Determine optimal layout based on question count - ALWAYS override the input field
-  let actualQuestionsPerColumn;
-  
-  // For high question counts, adjust columns to fit better on one page
-  if (totalQuestions > 50) {
-    actualQuestionsPerColumn = Math.ceil(totalQuestions / 4); // 4 columns max
-  } else if (totalQuestions > 30) {
-    actualQuestionsPerColumn = Math.ceil(totalQuestions / 3); // 3 columns max
-  } else if (totalQuestions > 15) {
-    actualQuestionsPerColumn = Math.ceil(totalQuestions / 2); // 2 columns max
-  } else {
-    actualQuestionsPerColumn = totalQuestions; // Single column for very few questions
-  }
-  
-  console.log(`Total Questions: ${totalQuestions}, Questions per Column: ${actualQuestionsPerColumn}, Columns: ${Math.ceil(totalQuestions / actualQuestionsPerColumn)}`);
-  
-  // Generate questions in columns
-  const columns = Math.ceil(totalQuestions / actualQuestionsPerColumn);
-  for (let col = 0; col < columns; col++) {
-    sheetHTML += '<div class="question-column">';
-    
-    const startQuestion = col * actualQuestionsPerColumn + 1;
-    const endQuestion = Math.min(startQuestion + actualQuestionsPerColumn - 1, totalQuestions);
-    
-    for (let q = startQuestion; q <= endQuestion; q++) {
-      const points = getPointsForQuestion(q, pointsRanges);
-      
-      sheetHTML += `
-        <div class="question-row">
-          <span class="question-number">${q}.</span>
-          <div class="question-choices">
-            ${choices.map(choice => `
-              <span class="choice-bubble" data-question="${q}" data-choice="${choice}"></span>
-              <span>${choice}</span>
-            `).join('')}
-            <span class="points-display">(${points} pt${points !== 1 ? 's' : ''})</span>
+  // Display answer key configuration info
+  if (sheetPreview) {
+    sheetPreview.innerHTML = `
+      <div style="padding: 30px; text-align: center;">
+        <div style="background: #e8f0fe; border: 2px solid #1a73e8; border-radius: 10px; padding: 30px; margin-bottom: 30px;">
+          <i class="fa-solid fa-info-circle" style="font-size: 48px; color: #1a73e8; margin-bottom: 15px;"></i>
+          <h2 style="color: #1a73e8; margin: 0 0 15px 0;">Answer Key Configuration</h2>
+          <div style="font-size: 16px; color: #333; line-height: 1.8;">
+            <p><strong>Fixed Settings:</strong></p>
+            <p>📝 <strong>30 Questions</strong> (Fixed)</p>
+            <p>🔤 <strong>Choices: A, B, C, D</strong> (Fixed)</p>
+            <p>🆔 <strong>Student ID:</strong> 11 digits (0-9)</p>
+            <p>📚 <strong>Subject ID:</strong> 4 characters (1 letter A-J + 3 numbers 0-9)</p>
+            <p style="margin-top: 20px; padding-top: 20px; border-top: 2px solid #1a73e8;">
+              <strong>Points Configuration:</strong><br>
+              ${pointsRanges.map(r => `Questions ${r.start}-${r.end}: ${r.points} point${r.points !== 1 ? 's' : ''}`).join('<br>')}
+            </p>
           </div>
         </div>
-      `;
-    }
-    
-    sheetHTML += '</div>';
-  }
-  
-  sheetHTML += `
-    </div>
-    <div style="margin-top: 30px; text-align: center; display: flex; justify-content: space-between; align-items: center;">
-      ${scannerEndMarker}
-      <div style="flex: 1; text-align: center;">
-        <!-- End section removed -->
+        <p style="color: #666; font-size: 14px;">Configure the correct answers below and save to create the answer key for Raspberry Pi scanning.</p>
       </div>
-      ${scannerEndMarker}
-    </div>
-  `;
-  
-  if (sheetPreview) {
-    sheetPreview.innerHTML = sheetHTML;
+    `;
     sheetPreview.style.display = 'block';
     
     // Generate answer key inputs with bubbles
-    generateAnswerKeyBubbles(totalQuestions, choices);
+    generateAnswerKeyBubbles(30, choices);
     
-    // Scroll to preview
-    sheetPreview.scrollIntoView({ behavior: 'smooth' });
+    // Hide configuration panel and expand preview
+    hideConfigurationPanel();
+    
+    // Scroll to answer key section
+    if (answerKeySection) {
+      answerKeySection.scrollIntoView({ behavior: 'smooth' });
+    }
   }
 }
 
-function generateIdSections(studentIdLength, subjectIdLength) {
-  let idHTML = '<div class="id-sections">';
+// Hide/Show configuration panel
+function hideConfigurationPanel() {
+  const formCard = document.querySelector('.enhanced-form-card');
+  const previewArea = document.querySelector('.preview-area');
+  const toggleBtn = document.getElementById('toggleConfig');
   
-  // Student ID section (mandatory)
-  idHTML += `
-    <div class="id-section">
-      <h4>STUDENT ID (Required)</h4>
-      <div class="id-bubbles">
-        ${Array.from({length: studentIdLength}, (_, digitIndex) => `
-          <div class="digit-column">
-            <div class="digit-label">${digitIndex + 1}</div>
-            ${Array.from({length: 10}, (_, digit) => `
-              <div class="id-bubble" data-type="student" data-digit="${digitIndex}" data-value="${digit}">${digit}</div>
-            `).join('')}
-          </div>
-        `).join('')}
-      </div>
-    </div>
-  `;
-  
-  // Subject ID section (optional)
-  if (subjectIdLength > 0) {
-    idHTML += `
-      <div class="id-section">
-        <h4>SUBJECT ID (Optional)</h4>
-        <div class="id-bubbles">
-          ${Array.from({length: subjectIdLength}, (_, digitIndex) => `
-            <div class="digit-column">
-              <div class="digit-label">${digitIndex + 1}</div>
-              ${Array.from({length: 10}, (_, digit) => `
-                <div class="id-bubble" data-type="subject" data-digit="${digitIndex}" data-value="${digit}">${digit}</div>
-              `).join('')}
-            </div>
-          `).join('')}
-        </div>
-      </div>
-    `;
+  if (formCard && previewArea && toggleBtn) {
+    formCard.style.display = 'none';
+    previewArea.style.gridColumn = '1 / -1'; // Make preview full width
+    toggleBtn.style.display = 'inline-flex';
+    toggleBtn.innerHTML = '<i class="fa-solid fa-sliders"></i> Show Configuration';
   }
-  
-  idHTML += '</div>';
-  return idHTML;
 }
+
+function showConfigurationPanel() {
+  const formCard = document.querySelector('.enhanced-form-card');
+  const previewArea = document.querySelector('.preview-area');
+  const toggleBtn = document.getElementById('toggleConfig');
+  
+  if (formCard && previewArea && toggleBtn) {
+    formCard.style.display = 'block';
+    previewArea.style.gridColumn = ''; // Reset to normal width
+    toggleBtn.innerHTML = '<i class="fa-solid fa-sliders"></i> Hide Configuration';
+  }
+}
+
+// Toggle configuration panel
+document.getElementById('toggleConfig')?.addEventListener('click', () => {
+  const formCard = document.querySelector('.enhanced-form-card');
+  if (formCard && formCard.style.display === 'none') {
+    showConfigurationPanel();
+  } else {
+    hideConfigurationPanel();
+  }
+});
+
+// Note: Visual answer sheet generation removed - only JSON answer key is needed for Raspberry Pi
 
 function getPointsConfiguration() {
   const pointsRows = pointsConfig?.querySelectorAll('.points-row') || [];
@@ -628,30 +527,15 @@ function handleAnswerKeyBubbleClick(event, questionNumber, choice) {
   console.log('Current Answer Key:', currentAnswerKey);
 }
 
-// ✅ FIXED: Proper validation and saving
+// ✅ Save template with JSON answer key
 async function saveTemplate() {
-  const examTitle = examTitleInput?.value?.trim();
   const subjectId = subjectSelect?.value;
-  const totalQuestions = parseInt(totalQuestionsInput?.value) || 30;
-  const studentIdLength = parseInt(studentIdLengthInput?.value) || 8;
-  const subjectIdLength = parseInt(subjectIdLengthInput?.value) || 0;
 
   console.log('Save validation - Subject ID:', subjectId);
 
-  // Basic validation - only require title and subject
-  if (!examTitle) {
-    alert('Please enter an exam title.');
-    return;
-  }
-
+  // Basic validation - only require subject
   if (!subjectId) {
     alert('Please select a subject.');
-    return;
-  }
-
-  // Validate student ID length (mandatory)
-  if (studentIdLength < 1 || studentIdLength > 15) {
-    alert('Student ID length must be between 1 and 15 digits.');
     return;
   }
 
@@ -666,14 +550,11 @@ async function saveTemplate() {
     return;
   }
 
-  // Convert answer key into array of items - allow empty array
-  const items = [];
-  for (let i = 1; i <= totalQuestions; i++) {
+  // Convert answer key into JSON object format
+  const answerKeyJSON = {};
+  for (let i = 1; i <= 30; i++) {
     if (currentAnswerKey[i]) {
-      items.push({
-        number: i,
-        correctAnswer: currentAnswerKey[i]
-      });
+      answerKeyJSON[i] = currentAnswerKey[i];
     }
   }
 
@@ -685,31 +566,33 @@ async function saveTemplate() {
       currentQuestionSetId = `qset_${Date.now()}`;
     }
 
-    // ✅ Complete exam document data with all necessary fields
+    // Get subject name for exam title
+    const selectedOption = subjectSelect.options[subjectSelect.selectedIndex];
+    const subjectName = selectedOption ? selectedOption.text : 'Answer Sheet';
+    const examTitle = `${subjectName} - Answer Sheet`;
+
+    // ✅ Complete exam document data with JSON answer key
     const examData = {
       // Primary identifiers
       examId: currentQuestionSetId,
       examTitle: examTitle,
-      name: examTitle, // Alternative field name for compatibility
-      title: examTitle, // Another alternative field name
+      name: examTitle,
+      title: examTitle,
       
       // Course/Class information
       subjectId,
       classId,
-      class: classId, // Alternative field name for compatibility
+      class: classId,
       
-      // Question configuration
-      totalQuestions,
-      choiceOptions: parseInt(choiceOptionsSelect?.value) || 4,
-      choices: parseInt(choiceOptionsSelect?.value) || 4, // Alternative field name
-      questionsPerColumn: parseInt(questionsPerColumnInput?.value) || 15,
+      // Fixed configuration
+      totalQuestions: 30,
+      choiceOptions: 4,
+      choices: 4,
+      studentIdLength: 11,
+      subjectIdLength: 4, // 1 letter + 3 numbers
       
-      // ID configuration
-      studentIdLength,
-      subjectIdLength,
-      
-      // Answer key (can be empty)
-      items: items, // Array of answer items - can be empty
+      // Answer key as JSON object: { "1": "A", "2": "B", ... }
+      answerKey: answerKeyJSON,
       
       // Points configuration
       pointsConfiguration: getPointsConfiguration(),
@@ -719,15 +602,15 @@ async function saveTemplate() {
       
       // Metadata
       createdBy: auth.currentUser?.email,
-      creator: auth.currentUser?.email, // Alternative field name
+      creator: auth.currentUser?.email,
       createdAt: new Date(),
-      dateCreated: new Date(), // Alternative field name
+      dateCreated: new Date(),
       updatedAt: new Date(),
       
       // Technical flags
       scannerCompatible: true,
       status: 'active',
-      version: '1.0'
+      version: '2.0'
     };
 
     console.log('Saving exam data:', examData);
@@ -736,11 +619,12 @@ async function saveTemplate() {
       // Save to Firebase 'exams' collection
       await setDoc(doc(db, 'exams', currentQuestionSetId), examData);
       
+      const answerCount = Object.keys(answerKeyJSON).length;
       const isEditing = window.currentExamId;
       const message = isEditing 
-        ? `Exam updated successfully! ${items.length > 0 ? `Updated with ${items.length} answer(s).` : 'Updated without answer key.'}`
-        : items.length > 0 
-          ? `Exam saved successfully with ${items.length} answer(s)! Redirecting to dashboard...`
+        ? `Exam updated successfully! ${answerCount > 0 ? `Updated with ${answerCount} answer(s).` : 'Updated without answer key.'}`
+        : answerCount > 0 
+          ? `Exam saved successfully with ${answerCount} answer(s)! Redirecting to dashboard...`
           : 'Exam saved successfully without answer key! You can add answers later. Redirecting to dashboard...';
       
       alert(message);
@@ -803,26 +687,6 @@ document.getElementById('clearAnswerKey')?.addEventListener('click', () => {
   }
 });
 
-// Print functionality
-document.getElementById('printSheet')?.addEventListener('click', () => {
-  // Check if answer sheet is generated
-  const sheetPreview = document.getElementById('sheetPreview');
-  if (!sheetPreview || sheetPreview.style.display === 'none' || !sheetPreview.innerHTML.trim()) {
-    alert('Please generate the answer sheet first before printing.');
-    return;
-  }
-  
-  // Add a small delay to ensure the print styles are applied
-  setTimeout(() => {
-    window.print();
-  }, 100);
-});
-
-// Export PDF (basic implementation)
-document.getElementById('exportPDF')?.addEventListener('click', () => {
-  // This would require a PDF library like jsPDF
-  alert('PDF export functionality would be implemented here using jsPDF library.');
-});
 
 // Auto-update points ranges when total questions change
 totalQuestionsInput?.addEventListener('change', () => {

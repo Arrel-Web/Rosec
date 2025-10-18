@@ -16,6 +16,10 @@ class RaspberryPiClientFree {
         this.db = getFirestore();
         this.auth = getAuth();
         
+        // Authentication
+        this.authToken = null;
+        this.isAuthenticated = false;
+        
         // Event listeners
         this.eventListeners = {};
         
@@ -38,15 +42,84 @@ class RaspberryPiClientFree {
         }
     }
 
+    // Authentication Methods
+    async authenticate(email, password) {
+        try {
+            const response = await this.makeRequest('/api/authenticate', {
+                method: 'POST',
+                body: JSON.stringify({ email, password })
+            });
+            
+            if (response.success && response.token) {
+                this.authToken = response.token;
+                this.isAuthenticated = true;
+                this.emit('authenticated', { email });
+                console.log('✅ Raspberry Pi authenticated successfully');
+                return response;
+            } else {
+                throw new Error('Authentication failed');
+            }
+        } catch (error) {
+            console.error('❌ Authentication failed:', error);
+            this.emit('authenticationFailed', { error: error.message });
+            throw error;
+        }
+    }
+
+    async authenticateWithCurrentUser() {
+        try {
+            const user = this.auth.currentUser;
+            if (!user) {
+                throw new Error('No user logged in');
+            }
+            
+            // Get the user's ID token from Firebase
+            const idToken = await user.getIdToken();
+            
+            // Use the email from Firebase Auth (password not available client-side)
+            // This assumes the Pi API can verify the Firebase ID token
+            // Or you need to prompt for password
+            console.log('Current user:', user.email);
+            
+            // For now, we'll need to prompt for password
+            this.emit('passwordRequired', { email: user.email });
+            
+            return { success: false, message: 'Password required for Pi authentication' };
+        } catch (error) {
+            console.error('Failed to authenticate with current user:', error);
+            throw error;
+        }
+    }
+
+    setAuthToken(token) {
+        this.authToken = token;
+        this.isAuthenticated = true;
+        console.log('✅ Auth token set manually');
+    }
+
+    clearAuth() {
+        this.authToken = null;
+        this.isAuthenticated = false;
+        this.emit('authenticationCleared');
+        console.log('🔓 Authentication cleared');
+    }
+
     // API request helper with retry logic
     async makeRequest(url, options = {}) {
         const fullUrl = `${this.raspberryPiUrl}${url}`;
         
+        const headers = {
+            'Content-Type': 'application/json',
+        };
+        
+        // Add authentication token if available
+        if (this.authToken) {
+            headers['Authorization'] = `Bearer ${this.authToken}`;
+        }
+        
         const defaultOptions = {
             method: 'GET',
-            headers: {
-                'Content-Type': 'application/json',
-            },
+            headers: headers,
             timeout: this.timeout,
             ...options
         };

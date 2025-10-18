@@ -1,10 +1,7 @@
 // Enhanced Features Loader - Loads remaining features
 class EnhancedFeaturesLoader {
   constructor() {
-    this.features = {
-      themeManager: null,
-      backupRestore: null
-    };
+    this.features = {};
     
     // Disable notifications permanently
     localStorage.setItem('rosec-enhanced-features-seen', 'true');
@@ -38,39 +35,12 @@ class EnhancedFeaturesLoader {
 
   async initializeFeatures() {
     try {
-      // Initialize remaining features
-      await this.initializeThemeManager();
-      await this.initializeBackupRestore();
-      
-      // Welcome notification disabled
-      // this.showWelcomeNotification();
+      // No additional features to load currently
+      // Theme Manager and Backup Restore have been removed
       
       console.log('✅ Enhanced features loaded successfully!');
     } catch (error) {
       console.error('Error initializing enhanced features:', error);
-    }
-  }
-
-  async initializeThemeManager() {
-    try {
-      // Theme Manager - Dark Mode
-      const { default: ThemeManager } = await import('./theme-manager.js');
-      this.features.themeManager = new ThemeManager();
-      window.themeManager = this.features.themeManager;
-    } catch (error) {
-      console.warn('Theme Manager not loaded:', error);
-    }
-  }
-
-  
-  async initializeBackupRestore() {
-    try {
-      // Backup & Restore
-      const { default: BackupRestore } = await import('./backup-restore.js');
-      this.features.backupRestore = new BackupRestore();
-      window.backupRestore = this.features.backupRestore;
-    } catch (error) {
-      console.warn('Backup Restore not loaded:', error);
     }
   }
 

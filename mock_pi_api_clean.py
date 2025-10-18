@@ -1,17 +1,10 @@
 from flask import Flask, jsonify, request
-from datetime import datetime, timezone
+from datetime import datetime
 import requests
 import json
-import firebase_admin
-from firebase_admin import credentials, firestore
 
 # Initialize Flask
 app = Flask(__name__)
-
-# Initialize Firebase Admin SDK
-cred = credentials.Certificate("serviceAccountKey.json.json")
-firebase_admin.initialize_app(cred)
-db = firestore.client()
 
 # Configuration - Pi API endpoints remain mocked
 FIREBASE_PROJECT_ID = "rosec-57d1d"
@@ -32,6 +25,15 @@ def status():
 @app.route('/api/test', methods=['GET'])
 def test():
     return jsonify({"connected": True})
+
+@app.route('/api/health', methods=['GET'])
+def health_check():
+    return jsonify({
+        "status": "healthy",
+        "timestamp": datetime.utcnow().isoformat(),
+        "version": "1.0.0-mock",
+        "uptime_seconds": 3600
+    })
 
 @app.route('/api/initialize', methods=['POST'])
 def initialize():
@@ -143,10 +145,9 @@ def scan():
         "firebase_synced": firebase_success
     })
 
-# Additional endpoints for Firestore testing
 @app.route('/api/exam/<exam_id>', methods=['GET'])
 def get_exam_template(exam_id):
-    """Mock endpoint to simulate getting exam template from Firestore"""
+    """Mock endpoint to simulate getting exam template"""
     return jsonify({
         "success": True,
         "template": {
@@ -190,43 +191,39 @@ def get_scan_results():
         ]
     })
 
-@app.route('/api/health', methods=['GET'])
-def health_check():
-    """Health check endpoint"""
-    return jsonify({
-        "status": "healthy",
-        "timestamp": datetime.utcnow().isoformat(),
-        "version": "1.0.0-mock",
-        "uptime_seconds": 3600
-    })
-
 @app.route('/api/login', methods=['POST'])
 def login():
-    """Secure login - returns ONLY success, message, token"""
-    import hashlib
+    """Secure login endpoint - returns only success, message, and token"""
     data = request.json or {}
     email = data.get("email", "")
     password = data.get("password", "")
     
-    # Credentials stored server-side only
-    users = {
-        "admin@rosec.com": "admin123",
-        "teacher@rosec.com": "teacher123"
+    # Mock user credentials (NEVER expose these in response!)
+    mock_users = {
+        "admin@rosec.com": {
+            "password": "admin123"
+        },
+        "teacher@rosec.com": {
+            "password": "teacher123"
+        }
     }
     
-    # Check credentials
-    if email in users and password == users[email]:
+    # Validate credentials
+    if email in mock_users and password == mock_users[email]["password"]:
+        # Generate mock token
+        import hashlib
         token = hashlib.sha256(f"{email}{datetime.utcnow().isoformat()}".encode()).hexdigest()
+        
         return jsonify({
             "success": True,
             "message": "Login successful",
             "token": token
         })
-    
-    return jsonify({
-        "success": False,
-        "message": "Invalid credentials"
-    }), 401
+    else:
+        return jsonify({
+            "success": False,
+            "message": "Invalid credentials"
+        }), 401
 
 if __name__ == '__main__':
-    app.run(host="0.0.0.0", port=5000)
+    app.run(host="0.0.0.0", port=5000, debug=True)

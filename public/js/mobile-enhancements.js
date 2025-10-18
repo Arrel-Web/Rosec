@@ -5,6 +5,12 @@
 
 class MobileEnhancements {
   constructor() {
+    // Prevent multiple instantiations
+    if (window.mobileEnhancementsInstance) {
+      console.log('Mobile Enhancements already initialized');
+      return window.mobileEnhancementsInstance;
+    }
+    
     this.isMobile = window.innerWidth <= 768;
     this.isTouch = 'ontouchstart' in window;
     
@@ -19,6 +25,7 @@ class MobileEnhancements {
       userAgent: navigator.userAgent
     });
     
+    window.mobileEnhancementsInstance = this;
     this.init();
   }
 
@@ -88,6 +95,39 @@ class MobileEnhancements {
       return; // Exit early if no sidebar
     }
 
+    // FORCE SIDEBAR SCROLLING ON MOBILE - AGGRESSIVE APPROACH
+    const forceSidebarScrolling = () => {
+      if (sidebar) {
+        const sidebarNav = sidebar.querySelector('.sidebar-nav');
+        if (sidebarNav) {
+          // Force scrolling styles with highest priority
+          sidebarNav.style.cssText = `
+            overflow-y: scroll !important;
+            overflow-x: hidden !important;
+            height: calc(100vh - 120px) !important;
+            max-height: calc(100vh - 120px) !important;
+            -webkit-overflow-scrolling: touch !important;
+            flex: 1 !important;
+            padding-bottom: 20px !important;
+          `;
+          
+          console.log('Sidebar nav scrolling forced:', {
+            scrollHeight: sidebarNav.scrollHeight,
+            clientHeight: sidebarNav.clientHeight,
+            overflowY: sidebarNav.style.overflowY
+          });
+        }
+        
+        // Make sidebar flex container with forced styles
+        sidebar.style.cssText += `
+          display: flex !important;
+          flex-direction: column !important;
+        `;
+        
+        console.log('Sidebar container flex forced');
+      }
+    };
+
     // Toggle function
     const toggleMobileMenu = (e) => {
       if (e) {
@@ -111,6 +151,11 @@ class MobileEnhancements {
           mobileOverlay.classList.add('active');
           document.body.style.overflow = 'hidden';
           console.log('Sidebar opened');
+          
+          // Apply scrolling fixes when opening
+          setTimeout(forceSidebarScrolling, 50);
+          setTimeout(forceSidebarScrolling, 150);
+          setTimeout(forceSidebarScrolling, 300);
         }
       } else {
         console.log('No sidebar found for toggle');
@@ -157,51 +202,8 @@ class MobileEnhancements {
       }
     });
 
-    // FORCE SIDEBAR SCROLLING ON MOBILE - AGGRESSIVE APPROACH
-    const forceSidebarScrolling = () => {
-      if (sidebar) {
-        const sidebarNav = sidebar.querySelector('.sidebar-nav');
-        if (sidebarNav) {
-          // Force scrolling styles with highest priority
-          sidebarNav.style.cssText = `
-            overflow-y: scroll !important;
-            overflow-x: hidden !important;
-            height: calc(100vh - 120px) !important;
-            max-height: calc(100vh - 120px) !important;
-            -webkit-overflow-scrolling: touch !important;
-            flex: 1 !important;
-            padding-bottom: 20px !important;
-          `;
-          
-          console.log('Sidebar nav scrolling forced:', {
-            scrollHeight: sidebarNav.scrollHeight,
-            clientHeight: sidebarNav.clientHeight,
-            overflowY: sidebarNav.style.overflowY
-          });
-        }
-        
-        // Make sidebar flex container with forced styles
-        sidebar.style.cssText += `
-          display: flex !important;
-          flex-direction: column !important;
-        `;
-        
-        console.log('Sidebar container flex forced');
-      }
-    };
-
     // Apply scrolling fixes immediately
     forceSidebarScrolling();
-    
-    // Reapply when sidebar opens with more aggressive timing
-    const originalToggle = toggleMobileMenu;
-    toggleMobileMenu = (e) => {
-      originalToggle(e);
-      // Multiple attempts to ensure scrolling works
-      setTimeout(forceSidebarScrolling, 50);
-      setTimeout(forceSidebarScrolling, 150);
-      setTimeout(forceSidebarScrolling, 300);
-    };
   }
 
   setupTouchOptimizations() {
@@ -360,8 +362,8 @@ class MobileEnhancements {
       });
     });
 
-    // Add skip links for keyboard navigation
-    this.addSkipLinks();
+    // Skip links disabled - was causing visibility issues
+    // this.addSkipLinks();
   }
 
   handleOrientationChange() {
@@ -522,29 +524,72 @@ class MobileEnhancements {
   }
 
   addSkipLinks() {
+    // Check if skip link already exists
+    if (document.querySelector('.skip-link')) {
+      return;
+    }
+    
     const skipLink = document.createElement('a');
     skipLink.href = '#main-content';
     skipLink.textContent = 'Skip to main content';
     skipLink.className = 'skip-link';
     skipLink.style.cssText = `
       position: absolute;
-      top: -40px;
-      left: 6px;
+      left: -9999px;
+      width: 1px;
+      height: 1px;
+      overflow: hidden;
+      clip: rect(0, 0, 0, 0);
+      white-space: nowrap;
       background: #1a73e8;
       color: white;
-      padding: 8px;
+      padding: 8px 12px;
       text-decoration: none;
       border-radius: 4px;
-      z-index: 9999;
-      transition: top 0.3s;
+      z-index: 99999;
+      font-weight: 500;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.2);
     `;
 
     skipLink.addEventListener('focus', () => {
-      skipLink.style.top = '6px';
+      skipLink.style.cssText = `
+        position: fixed;
+        top: 10px;
+        left: 10px;
+        width: auto;
+        height: auto;
+        overflow: visible;
+        clip: auto;
+        white-space: normal;
+        background: #1a73e8;
+        color: white;
+        padding: 8px 12px;
+        text-decoration: none;
+        border-radius: 4px;
+        z-index: 99999;
+        font-weight: 500;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+      `;
     });
 
     skipLink.addEventListener('blur', () => {
-      skipLink.style.top = '-40px';
+      skipLink.style.cssText = `
+        position: absolute;
+        left: -9999px;
+        width: 1px;
+        height: 1px;
+        overflow: hidden;
+        clip: rect(0, 0, 0, 0);
+        white-space: nowrap;
+        background: #1a73e8;
+        color: white;
+        padding: 8px 12px;
+        text-decoration: none;
+        border-radius: 4px;
+        z-index: 99999;
+        font-weight: 500;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+      `;
     });
 
     document.body.insertBefore(skipLink, document.body.firstChild);
@@ -670,13 +715,15 @@ class MobileEnhancements {
   }
 }
 
-// Initialize mobile enhancements when DOM is loaded
-if (document.readyState === 'loading') {
-  document.addEventListener('DOMContentLoaded', () => {
+// Initialize mobile enhancements when DOM is loaded (only once)
+if (!window.mobileEnhancementsInstance) {
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', () => {
+      new MobileEnhancements();
+    });
+  } else {
     new MobileEnhancements();
-  });
-} else {
-  new MobileEnhancements();
+  }
 }
 
 // Export for use in other scripts
